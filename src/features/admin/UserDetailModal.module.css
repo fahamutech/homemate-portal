@@ -1,0 +1,218 @@
+.summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+  padding-bottom: var(--space-lg);
+}
+
+.avatar,
+.avatarEmpty {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  border-radius: 28px;
+  object-fit: cover;
+  background: var(--color-bg-page);
+  border: 1px solid var(--color-border-default);
+}
+
+.summaryLine {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.muted {
+  margin: var(--space-xs) 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.warning {
+  margin: var(--space-xs) 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-warning-text, #b45309);
+}
+
+.saved {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-brand-primary);
+  margin-right: auto;
+}
+
+.tabs {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--color-border-default);
+  padding-bottom: var(--space-lg);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.tab:hover { background: var(--color-bg-page); }
+
+.tabActive {
+  background: rgba(5, 150, 118, 0.12);
+  color: var(--color-brand-primary);
+  font-weight: 600;
+}
+
+/* Same shape as the sidebar badge: a count that needs a person. */
+.tabBadge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--color-danger-text);
+  color: var(--color-white);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.sectionTitle {
+  margin: var(--space-xl) 0 var(--space-md);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-xl);
+  align-items: end;
+}
+
+.fullWidth { grid-column: 1 / -1; }
+
+.decision {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-xl);
+  flex-wrap: wrap;
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-page);
+}
+
+.decisionTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.decisionActions {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.rejectBox {
+  margin-top: var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+}
+
+.documentList,
+.remediationList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.document {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+}
+
+.documentThumb {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-page);
+}
+
+.documentBody { flex: 1; min-width: 0; }
+
+.documentTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.documentActions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.remediation {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+}
+
+/* On a phone every one of these rows stacks rather than squeezing. */
+@media (max-width: 640px) {
+  .document,
+  .remediation,
+  .decision {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .documentThumb {
+    width: 100%;
+    height: 140px;
+    flex: none;
+  }
+}

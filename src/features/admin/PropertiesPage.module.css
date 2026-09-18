@@ -1,0 +1,18 @@
+.coverThumb {
+  width: 56px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-default);
+  display: block;
+  background: var(--color-slate-100);
+}
+
+.coverEmpty {
+  display: block;
+  width: 56px;
+  height: 42px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--color-border-default);
+  background: var(--color-slate-50);
+}

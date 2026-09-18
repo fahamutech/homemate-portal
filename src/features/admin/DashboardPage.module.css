@@ -1,0 +1,157 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xl);
+}
+
+.kpiRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xl);
+}
+
+/* KPI cards are buttons: each one drills into the list it counts. */
+.kpiCard {
+  flex: 1;
+  min-width: 220px;
+  background: var(--color-white);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-3xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.kpiCard:hover {
+  border-color: var(--color-brand-primary);
+}
+
+.kpiTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+}
+
+.kpiLabel {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.kpiIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.kpiValue {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.kpiTrend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.trendUp { color: var(--color-success-text); font-weight: 600; }
+.trendDown { color: var(--color-danger-text); font-weight: 600; }
+.trendLabel { color: var(--color-text-disabled); }
+
+.bottomRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3xl);
+}
+
+/* The audit table needs roughly twice the width of the interventions panel
+   to avoid cramming five columns into half the row (matches Figma 2:4202). */
+.activityCard {
+  flex: 2 1 480px;
+  min-width: 0;
+  background: var(--color-white);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-3xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.activityCard h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.actionsCard {
+  flex: 0 1 340px;
+  min-width: 280px;
+  max-width: 100%;
+  background: var(--color-white);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-3xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+}
+
+.actionsCard h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--color-white);
+  font-family: inherit;
+  width: 100%;
+}
+
+.actionButtonPrimary { background: var(--color-brand-primary); }
+.actionButtonDark { background: var(--color-navy-900); }
+
+.actionText p:first-child {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.actionText p:last-child {
+  margin: 0;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+@media (max-width: 767px) {
+  .kpiCard { min-width: 100%; }
+  .actionsCard { width: 100%; }
+}

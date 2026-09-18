@@ -1,0 +1,117 @@
+.steps {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--color-border-default);
+  padding-bottom: var(--space-lg);
+}
+
+.step {
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.step:hover { background: var(--color-bg-page); }
+
+.stepActive {
+  background: rgba(5, 150, 118, 0.12);
+  color: var(--color-brand-primary);
+  font-weight: 600;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-xl);
+  align-items: end;
+}
+
+.fullWidth { grid-column: 1 / -1; }
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.checkGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.summary {
+  margin: var(--space-xl) 0 var(--space-md) 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.chargeRow {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr auto auto;
+  gap: var(--space-md);
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.estimate {
+  margin-top: var(--space-xl);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-teal-light, #e5f7f2);
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.progress {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-brand-primary);
+}
+
+.hint {
+  margin: var(--space-md) 0 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.photoGrid {
+  list-style: none;
+  margin: var(--space-xl) 0 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-lg);
+}
+
+.photoGrid li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.photoGrid img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-default);
+}
+
+@media (max-width: 767px) {
+  .grid { grid-template-columns: 1fr; }
+  .chargeRow { grid-template-columns: 1fr 1fr; }
+}

@@ -1,0 +1,325 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+  font-family: var(--font-family-base);
+}
+
+/* --- Sidebar (Figma node 374:777 "HM/Backoffice/Sidebar", Role=SuperAdmin) --- */
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--color-sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--radius-2xl) var(--radius-xl);
+}
+
+.sidebarTop {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4xl);
+}
+
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding-bottom: var(--space-xs);
+}
+
+.logoIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--color-brand-primary);
+  flex-shrink: 0;
+}
+
+.logoTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-white);
+}
+
+.logoSubtitle {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-brand-primary);
+}
+
+.navList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  height: 38px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  color: var(--color-white);
+  text-decoration: none;
+  opacity: 0.65;
+  font-size: 14px;
+  font-weight: 500;
+  border-left: 3px solid transparent;
+}
+
+.navBadge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--color-danger-text);
+  color: var(--color-white);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  /* A badge on a dimmed nav item must still read as urgent. */
+  opacity: 1;
+}
+
+.navItem:hover {
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.navItemActive {
+  opacity: 1;
+  font-weight: 600;
+  background: rgba(5, 150, 118, 0.12);
+  border-left-color: var(--color-brand-primary);
+}
+
+.navLabel {
+  flex: 1;
+}
+
+.userProfile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: 12px;
+  border-radius: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background: var(--color-brand-primary);
+  color: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.userInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.userEmail {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userRole {
+  margin: 0;
+  font-size: 11px;
+  color: var(--color-gray-400);
+}
+
+.logoutButton {
+  border: none;
+  background: none;
+  color: var(--color-gray-400);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+.logoutButton:hover {
+  color: var(--color-white);
+}
+
+/* --- Content area / top bar (Figma node 2:4121/2:4122) --- */
+
+.contentWrapper {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-page);
+}
+
+.topBar {
+  min-height: 72px;
+  flex-shrink: 0;
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-border-default);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding: var(--space-lg) var(--space-4xl);
+}
+
+.topBarLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  min-width: 0;
+}
+
+/* Hamburger: hidden on desktop, shown once the sidebar becomes a drawer. */
+.menuButton {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.menuButton span {
+  display: block;
+  height: 2px;
+  background: var(--color-text-primary);
+  border-radius: 1px;
+}
+
+.scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 41, 0.45);
+  z-index: 40;
+}
+
+.topBarTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.topBarSubtitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3xl);
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  background: var(--color-bg-page);
+  border-radius: var(--radius-full);
+  padding: var(--space-md) var(--space-xl);
+  width: 280px;
+}
+
+.searchBox input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  width: 100%;
+}
+
+.iconButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border-default);
+  background: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+}
+
+.notificationDot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-danger-text);
+}
+
+.mainBody {
+  flex: 1;
+  padding: var(--radius-2xl);
+  overflow-y: auto;
+}
+
+/* --- Responsive: sidebar becomes an off-canvas drawer below 1024px --------- */
+
+@media (max-width: 1023px) {
+  .menuButton { display: flex; }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 45;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+
+  .sidebarOpen { transform: translateX(0); }
+
+  .scrim { display: block; }
+
+  .topBar { padding: var(--space-lg) var(--space-xl); }
+
+  .searchBox { display: none; }
+}
+
+@media (max-width: 767px) {
+  .mainBody { padding: var(--space-xl) var(--space-lg); }
+  .topBarSubtitle { display: none; }
+  .iconButton { display: none; }
+}

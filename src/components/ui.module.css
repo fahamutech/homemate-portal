@@ -1,0 +1,347 @@
+/* Shared backoffice primitives. Visual reference: Figma "02 Components"
+   (node 2:3) — Button, Input Field, Badge, HM/Backoffice/DataTable,
+   FilterBar, TableStatusBadge, ConfirmDialog. */
+
+/* --- Buttons --------------------------------------------------------------- */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.buttonMedium { padding: 10px var(--space-xl); font-size: 14px; }
+.buttonSmall { padding: 7px var(--space-lg); font-size: 13px; }
+
+.buttonPrimary { background: var(--color-brand-primary); color: var(--color-white); }
+.buttonPrimary:hover:not(:disabled) { filter: brightness(1.05); }
+
+.buttonSecondary { background: var(--color-navy-900); color: var(--color-white); }
+
+.buttonOutline {
+  background: var(--color-white);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-default);
+}
+.buttonOutline:hover:not(:disabled) { background: var(--color-bg-page); }
+
+.buttonGhost { background: transparent; color: var(--color-text-secondary); }
+.buttonGhost:hover:not(:disabled) { background: var(--color-bg-page); }
+
+.buttonDanger { background: var(--color-danger-text); color: var(--color-white); }
+
+.button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* --- Badges ---------------------------------------------------------------- */
+
+.badge {
+  display: inline-block;
+  padding: 4px var(--space-md);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badgeSuccess { background: var(--color-success-bg); color: var(--color-success-text); }
+.badgeWarning { background: var(--color-warning-bg); color: var(--color-warning-text); }
+.badgeDanger { background: var(--color-danger-bg); color: var(--color-danger-text); }
+.badgeInfo { background: var(--color-info-bg); color: var(--color-info-text); }
+.badgeNeutral { background: var(--color-slate-100); color: var(--color-text-secondary); }
+
+/* --- Fields ---------------------------------------------------------------- */
+
+.field { display: flex; flex-direction: column; gap: var(--space-sm); }
+
+.label { font-size: 13px; font-weight: 600; color: var(--color-text-primary); }
+
+.input,
+.select,
+.textarea {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 10px var(--space-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-white);
+  color: var(--color-text-primary);
+  width: 100%;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 1px;
+}
+
+.textarea { min-height: 84px; resize: vertical; }
+
+.fieldError { font-size: 12px; color: var(--color-danger-text); }
+
+/* --- Page scaffolding ------------------------------------------------------ */
+
+.page { display: flex; flex-direction: column; gap: var(--space-2xl); }
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xl);
+  flex-wrap: wrap;
+}
+
+.pageHeader h2 { margin: 0; font-size: 16px; color: var(--color-text-primary); }
+.pageHeader p { margin: 2px 0 0 0; font-size: 13px; color: var(--color-text-secondary); }
+
+.card {
+  background: var(--color-white);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-3xl);
+}
+
+/* --- Filter bar ------------------------------------------------------------ */
+
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  align-items: flex-end;
+}
+
+.filterBar .field { min-width: 150px; flex: 1 1 150px; }
+.filterBar .searchField { flex: 2 1 260px; }
+
+/* --- Table ----------------------------------------------------------------- */
+
+.tableWrapper { overflow-x: auto; }
+
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+.table thead th {
+  text-align: left;
+  background: var(--color-bg-page);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: var(--space-lg);
+  white-space: nowrap;
+}
+
+.table tbody td {
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-border-default);
+  color: var(--color-text-primary);
+  vertical-align: middle;
+}
+
+.table tbody tr:hover { background: var(--color-bg-page); }
+
+.rowActions { display: flex; gap: var(--space-md); justify-content: flex-end; flex-wrap: wrap; }
+
+/* Mobile: each row becomes a labelled card (the table itself is meaningless
+   at 375px). Labels come from data-label on each cell. */
+@media (max-width: 767px) {
+  .table thead { display: none; }
+  .table,
+  .table tbody,
+  .table tr,
+  .table td { display: block; width: 100%; }
+
+  .table tbody tr {
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-lg);
+    padding: var(--space-md);
+    background: var(--color-white);
+  }
+
+  .table tbody td {
+    border-bottom: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-md) var(--space-md);
+    text-align: right;
+  }
+
+  .table tbody td::before {
+    content: attr(data-label);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-align: left;
+  }
+
+  .rowActions { justify-content: flex-end; }
+}
+
+/* --- States ---------------------------------------------------------------- */
+
+.stateBlock {
+  padding: var(--space-5xl) var(--space-xl);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.errorBlock {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg) var(--space-xl);
+  font-size: 13px;
+}
+
+.skeletonRow {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--color-slate-100), var(--color-slate-200), var(--color-slate-100));
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+  margin: var(--space-lg) 0;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* --- Pagination ------------------------------------------------------------ */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding-top: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.paginationInfo { font-size: 12px; color: var(--color-text-secondary); }
+.paginationControls { display: flex; gap: var(--space-md); }
+
+/* --- Modal / dialog -------------------------------------------------------- */
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 41, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  z-index: 50;
+}
+
+.modal {
+  background: var(--color-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-modal);
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: var(--space-3xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+}
+
+.modalHeader h3 { margin: 0; font-size: 16px; color: var(--color-text-primary); }
+.modalHeader p { margin: var(--space-sm) 0 0 0; font-size: 13px; color: var(--color-text-secondary); }
+
+.modalBody { display: flex; flex-direction: column; gap: var(--space-xl); }
+
+.modalFooter { display: flex; justify-content: flex-end; gap: var(--space-lg); flex-wrap: wrap; }
+
+/* --- Detail list ----------------------------------------------------------- */
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-xl);
+}
+
+.detailItem { display: flex; flex-direction: column; gap: 2px; }
+.detailItem dt { font-size: 12px; color: var(--color-text-secondary); }
+.detailItem dd { margin: 0; font-size: 14px; color: var(--color-text-primary); font-weight: 500; }
+
+/* A status plus the one or two counts that qualify it, on one line but
+   wrapping rather than overflowing a narrow cell. */
+.inlineStack {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* A tab's own action row, sitting where a PageSection's actions would. */
+.tabActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-lg);
+}
+
+/* Someone else's words, shown as a quotation rather than as our own copy. */
+.quoteBlock {
+  margin: var(--space-lg) 0 var(--space-xl);
+  padding: var(--space-lg) var(--space-xl);
+  border-left: 3px solid var(--color-brand-primary);
+  background: var(--color-bg-page);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.quoteBlock p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.hint {
+  margin: calc(-1 * var(--space-md)) 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.sectionTitle {
+  margin: var(--space-xl) 0 var(--space-md);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.listRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
+  font-size: 13px;
+}
+
+.cardTitle {
+  margin: 0 0 var(--space-sm);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}

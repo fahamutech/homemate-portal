@@ -1,0 +1,162 @@
+.muted {
+  margin: 0 0 var(--space-lg);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.warning {
+  margin: var(--space-lg) 0 0;
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  background: rgba(180, 83, 9, 0.08);
+  font-size: 13px;
+  color: var(--color-warning-text, #b45309);
+}
+
+.cardTitle {
+  margin: 0 0 var(--space-sm);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.sectionTitle {
+  margin: var(--space-xl) 0 var(--space-md);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.actionBar {
+  margin-top: var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-page);
+}
+
+.actionButtons {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  margin-top: var(--space-md);
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+}
+
+.rowRight {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Summary cards across the top of the money screen. */
+.summaryCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.summaryCard {
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface, #fff);
+}
+
+.summaryLabel {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.summaryValue {
+  margin: var(--space-sm) 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.summaryNote {
+  margin: var(--space-xs) 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.tabs {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--color-border-default);
+  padding-bottom: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.tab:hover { background: var(--color-bg-page); }
+
+.tabActive {
+  background: rgba(5, 150, 118, 0.12);
+  color: var(--color-brand-primary);
+  font-weight: 600;
+}
+
+.tabBadge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--color-danger-text);
+  color: var(--color-white);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
