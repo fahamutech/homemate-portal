@@ -1,10 +1,11 @@
 import {useEffect, useState} from 'react';
-import {NavLink, Outlet, useLocation} from 'react-router-dom';
+import {NavLink, Outlet, useLocation, useNavigate} from 'react-router-dom';
 import type {AdminAccount} from '../../api/adminAuthClient';
 import {ADMIN_NAV_ITEMS} from './navConfig';
 import {AdminNavIcon} from './icons';
 import {useAdminSearchBar} from './searchContext';
 import {useAttention} from './attentionContext';
+import {humanise} from '../../components/ui';
 import bellIcon from '../../assets/icons/bell.svg';
 import searchIcon from '../../assets/icons/search.svg';
 import styles from './AdminLayout.module.css';
@@ -19,6 +20,20 @@ function initialsFor(email: string): string {
   return localPart.slice(0, 2).toUpperCase();
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Administrator',
+  manager: 'Manager',
+  moderator: 'Moderator',
+  finance_auditor: 'Finance Auditor',
+};
+
+/** role='admin' always sees everything; other roles are scoped to their granted sections. */
+function visibleNavItems(admin: AdminAccount) {
+  if (admin.role === 'admin') return ADMIN_NAV_ITEMS;
+  const granted = admin.allowedRoutes ?? [];
+  return ADMIN_NAV_ITEMS.filter((item) => item.aclKey === 'dashboard' || granted.includes(item.aclKey));
+}
+
 /**
  * Pixel reference: Figma node 2:4072 (sidebar 374:777 Role=SuperAdmin, top bar
  * 2:4122). Desktop keeps the 240px sidebar; below 1024px it becomes an
@@ -31,12 +46,23 @@ export function AdminLayout({admin, onLogout}: AdminLayoutProps) {
   const search = useAdminSearchBar();
   const attention = useAttention();
   const totalWaiting = Object.values(attention.badges).reduce((sum, count) => sum + count, 0);
+  const navItems = visibleNavItems(admin);
   const currentItem = ADMIN_NAV_ITEMS.find((item) => location.pathname.startsWith(item.path));
+  const navigate = useNavigate();
 
   // Navigating on a phone should close the drawer behind you.
   useEffect(() => {
     setNavOpen(false);
   }, [location.pathname]);
+
+  // A direct link (bookmark, typed URL) to a section this account was never
+  // granted should not render — the API would 403 it anyway, so send them
+  // somewhere they can actually use instead of a broken screen.
+  useEffect(() => {
+    if (currentItem && !navItems.some((item) => item.path === currentItem.path)) {
+      navigate('/admin/dashboard', {replace: true});
+    }
+  }, [currentItem, navItems, navigate]);
 
   return (
     <div className={styles.shell}>
@@ -53,7 +79,7 @@ export function AdminLayout({admin, onLogout}: AdminLayoutProps) {
           </div>
 
           <nav className={styles.navList} aria-label="Admin sections">
-            {ADMIN_NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const waiting = item.badge ? attention.badges[item.badge] : 0;
               return (
                 <NavLink
@@ -81,7 +107,7 @@ export function AdminLayout({admin, onLogout}: AdminLayoutProps) {
           <div className={styles.avatar}>{initialsFor(admin.email)}</div>
           <div className={styles.userInfo}>
             <p className={styles.userEmail} title={admin.email}>{admin.email}</p>
-            <p className={styles.userRole}>Administrator</p>
+            <p className={styles.userRole}>{ROLE_LABELS[admin.role] ?? humanise(admin.role)}</p>
           </div>
           <button className={styles.logoutButton} onClick={onLogout}>Log out</button>
         </div>

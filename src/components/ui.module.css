@@ -288,6 +288,21 @@
   color: var(--color-text-secondary);
 }
 
+/* A multi-select of checkboxes, e.g. the staff ACL route list. */
+.checkboxGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm) var(--space-lg);
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
 /* A tab's own action row, sitting where a PageSection's actions would. */
 .tabActions {
   display: flex;

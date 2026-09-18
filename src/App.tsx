@@ -1,5 +1,6 @@
 import {useMemo} from 'react';
 import {BrowserRouter, Navigate, Route, Routes} from 'react-router-dom';
+import type {AdminAccount} from './api/adminAuthClient';
 import {AdminLoginScreen} from './features/auth/AdminLoginScreen';
 import {useAdminSession} from './features/auth/useAdminSession';
 import {AdminApiProvider} from './api/AdminApiContext';
@@ -20,7 +21,7 @@ import {ViewingsPage} from './features/admin/ViewingsPage';
 import {BookingsPage} from './features/admin/BookingsPage';
 
 /** The admin console, mounted once a session exists. */
-export function AdminRoutes({token, admin, onLogout}: {token: string; admin: {email: string; role: 'admin'}; onLogout: () => void}) {
+export function AdminRoutes({token, admin, onLogout}: {token: string; admin: AdminAccount; onLogout: () => void}) {
   const api = useMemo(() => createHttpAdminApi(token), [token]);
 
   return (

@@ -1,6 +1,14 @@
+export type AdminRole = 'admin' | 'moderator' | 'manager' | 'finance_auditor';
+
 export interface AdminAccount {
   email: string;
-  role: 'admin';
+  role: AdminRole;
+  /**
+   * Sidebar section keys this account may open (see navConfig.ts's `aclKey`).
+   * `null` for role `admin` (always full access) and for the single
+   * env-predefined superuser; an empty array means "no sections granted yet".
+   */
+  allowedRoutes?: string[] | null;
 }
 
 export interface AdminLoginResult {

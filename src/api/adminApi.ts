@@ -27,6 +27,14 @@ export interface AdminUser {
   open_remediations?: string;
   property_count?: string;
   unpaid_balance?: string;
+  /** Staff (non-admin roles) only: the sidebar sections this account may open. */
+  allowed_routes?: string[] | null;
+  /**
+   * Present exactly once, on the response to createUser for a staff role —
+   * the plaintext of the password just generated for them. Never stored or
+   * returned again after this; the creating admin must hand it over now.
+   */
+  initial_password?: string;
 }
 
 export type KycStatus = 'not_started' | 'pending' | 'in_review' | 'verified' | 'rejected' | 'expired';

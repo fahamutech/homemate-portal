@@ -11,6 +11,7 @@ import {
 import {useAdminSearch} from './searchContext';
 import {useAttention} from './attentionContext';
 import {UserDetailModal} from './UserDetailModal';
+import {STAFF_ACL_OPTIONS} from './navConfig';
 
 const PLATFORM_ROLES = [
   {value: 'customer', label: 'Customer'},
@@ -61,6 +62,7 @@ export function UsersPage({staffOnly}: {staffOnly: boolean}) {
   );
   const attention = useAttention();
   const [creating, setCreating] = useState(false);
+  const [createdStaff, setCreatedStaff] = useState<AdminUser | null>(null);
   const [editing, setEditing] = useState<AdminUser | null>(null);
   const [statusAction, setStatusAction] = useState<StatusAction | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -196,11 +198,16 @@ export function UsersPage({staffOnly}: {staffOnly: boolean}) {
           staffOnly={staffOnly}
           roles={roles}
           onClose={() => setCreating(false)}
-          onCreated={() => {
+          onCreated={(user) => {
             setCreating(false);
             refresh();
+            if (user.initial_password) setCreatedStaff(user);
           }}
         />
+      )}
+
+      {createdStaff && (
+        <InitialPasswordDialog user={createdStaff} onClose={() => setCreatedStaff(null)} />
       )}
 
       {statusAction && (
@@ -269,9 +276,19 @@ function EditUserModal({
     email: user.email ?? '',
     role: user.role,
     jobTitle: user.job_title ?? '',
+    allowedRoutes: user.allowed_routes ?? [],
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function toggleAclKey(key: string) {
+    setForm((current) => ({
+      ...current,
+      allowedRoutes: current.allowedRoutes.includes(key)
+        ? current.allowedRoutes.filter((existing) => existing !== key)
+        : [...current.allowedRoutes, key],
+    }));
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -284,6 +301,7 @@ function EditUserModal({
         email: form.email,
         role: form.role,
         jobTitle: staffOnly ? form.jobTitle : undefined,
+        allowedRoutes: staffOnly && form.role !== 'admin' ? form.allowedRoutes : undefined,
       });
       onSaved();
     } catch (err) {
@@ -341,12 +359,39 @@ function EditUserModal({
             />
           </Field>
         )}
+        {staffOnly && (
+          form.role === 'admin' ? (
+            <p className={fieldStyles.hint}>Administrators always have full access to every section.</p>
+          ) : (
+            <AclChecklist selected={form.allowedRoutes} onToggle={toggleAclKey} />
+          )
+        )}
         <div className={fieldStyles.modalFooter}>
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
           <Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</Button>
         </div>
       </form>
     </Modal>
+  );
+}
+
+/** The checklist of sidebar sections a non-admin staff account may open (see navConfig.ts's STAFF_ACL_OPTIONS). */
+function AclChecklist({selected, onToggle}: {selected: string[]; onToggle: (key: string) => void}) {
+  return (
+    <Field label="Portal access (which sections this account can open)" htmlFor="acl-routes">
+      <div className={fieldStyles.checkboxGrid} id="acl-routes">
+        {STAFF_ACL_OPTIONS.map((option) => (
+          <label key={option.value} className={fieldStyles.checkbox}>
+            <input
+              type="checkbox"
+              checked={selected.includes(option.value)}
+              onChange={() => onToggle(option.value)}
+            />
+            {option.label}
+          </label>
+        ))}
+      </div>
+    </Field>
   );
 }
 
@@ -359,7 +404,7 @@ function CreateUserModal({
   staffOnly: boolean;
   roles: {value: string; label: string}[];
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (user: AdminUser) => void;
 }) {
   const api = useAdminApi();
   const [form, setForm] = useState({
@@ -368,23 +413,34 @@ function CreateUserModal({
     email: '',
     role: roles[0].value,
     jobTitle: '',
+    allowedRoutes: [] as string[],
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function toggleAclKey(key: string) {
+    setForm((current) => ({
+      ...current,
+      allowedRoutes: current.allowedRoutes.includes(key)
+        ? current.allowedRoutes.filter((existing) => existing !== key)
+        : [...current.allowedRoutes, key],
+    }));
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      await api.createUser({
+      const created = await api.createUser({
         fullName: form.fullName,
         phoneNumber: form.phoneNumber || undefined,
         email: form.email || undefined,
         role: form.role,
         jobTitle: staffOnly ? form.jobTitle || undefined : undefined,
+        allowedRoutes: staffOnly && form.role !== 'admin' ? form.allowedRoutes : undefined,
       });
-      onCreated();
+      onCreated(created);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save this user');
     } finally {
@@ -395,7 +451,11 @@ function CreateUserModal({
   return (
     <Modal
       title={staffOnly ? 'Invite a staff member' : 'Add a platform user'}
-      description={staffOnly ? 'Staff start as pending until their account is activated.' : undefined}
+      description={
+        staffOnly
+          ? 'A one-time password is generated on save. Staff also need an active account and verified identity before they can sign in.'
+          : undefined
+      }
       onClose={onClose}
     >
       <form onSubmit={handleSubmit} className={fieldStyles.modalBody}>
@@ -434,6 +494,11 @@ function CreateUserModal({
                 onChange={(event) => setForm({...form, jobTitle: event.target.value})}
               />
             </Field>
+            {form.role === 'admin' ? (
+              <p className={fieldStyles.hint}>Administrators always have full access to every section.</p>
+            ) : (
+              <AclChecklist selected={form.allowedRoutes} onToggle={toggleAclKey} />
+            )}
           </>
         ) : (
           <Field label="Phone number" htmlFor="create-phone">
@@ -451,6 +516,46 @@ function CreateUserModal({
           <Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button>
         </div>
       </form>
+    </Modal>
+  );
+}
+
+/**
+ * The initial password is generated server-side and never stored or shown
+ * again after this — it only ever exists in this one API response, so the
+ * admin who just created the account must copy it down (or hand it over)
+ * right now rather than fetching it later.
+ */
+function InitialPasswordDialog({user, onClose}: {user: AdminUser; onClose: () => void}) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(user.initial_password ?? '');
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <Modal
+      title={`${user.full_name ?? 'Staff account'} was created`}
+      description="This password is shown once. Share it with them now — it cannot be retrieved again after you close this."
+      onClose={onClose}
+    >
+      <div className={fieldStyles.modalBody}>
+        <Field label="Email address" htmlFor="created-email">
+          <TextInput id="created-email" value={user.email ?? ''} readOnly />
+        </Field>
+        <Field label="Initial password" htmlFor="created-password">
+          <TextInput id="created-password" value={user.initial_password ?? ''} readOnly />
+        </Field>
+        <div className={fieldStyles.modalFooter}>
+          <Button type="button" variant="outline" onClick={copy}>{copied ? 'Copied' : 'Copy password'}</Button>
+          <Button type="button" onClick={onClose}>Done</Button>
+        </div>
+      </div>
     </Modal>
   );
 }

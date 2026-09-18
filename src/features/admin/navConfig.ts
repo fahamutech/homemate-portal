@@ -1,3 +1,7 @@
+export type AdminAclKey =
+  | 'dashboard' | 'users' | 'staff' | 'properties' | 'agencies' | 'inquiries'
+  | 'viewings' | 'bookings' | 'payments' | 'dictionaries' | 'settings' | 'audit';
+
 export interface AdminNavItem {
   path: string;
   label: string;
@@ -6,7 +10,29 @@ export interface AdminNavItem {
   icon: 'dashboard' | 'users' | 'staff' | 'properties' | 'brokers' | 'payments' | 'reports' | 'settings' | 'content';
   /** Which counter from /admin/attention this entry shows, if any. */
   badge?: 'properties' | 'agencies' | 'users' | 'staff' | 'payments' | 'inquiries' | 'viewings' | 'bookings';
+  /**
+   * The staff ACL key this section needs (matches homemate-functions'
+   * shared/admin-acl.mjs). 'dashboard' is always granted to every signed-in
+   * staff account; every other section requires this key in the account's
+   * `allowedRoutes` unless its role is 'admin' (unrestricted).
+   */
+  aclKey: AdminAclKey;
 }
+
+/** Every ACL key a non-admin staff account can be granted, for the create/edit staff form. */
+export const STAFF_ACL_OPTIONS: {value: AdminAclKey; label: string}[] = [
+  {value: 'users', label: 'Users'},
+  {value: 'staff', label: 'Staff'},
+  {value: 'properties', label: 'Properties'},
+  {value: 'agencies', label: 'Agencies'},
+  {value: 'inquiries', label: 'Enquiries'},
+  {value: 'viewings', label: 'Viewings'},
+  {value: 'bookings', label: 'Bookings'},
+  {value: 'payments', label: 'Payments'},
+  {value: 'dictionaries', label: 'Dictionaries'},
+  {value: 'settings', label: 'Settings'},
+  {value: 'audit', label: 'Audit log'},
+];
 
 /**
  * Single source of truth for the sidebar's nav list and the top bar's
@@ -20,6 +46,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     title: 'Dashboard Overview',
     subtitle: 'Real-time pulse of HomeMate Africa',
     icon: 'dashboard',
+    aclKey: 'dashboard',
   },
   {
     path: '/admin/users',
@@ -28,6 +55,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     subtitle: 'Customers, landlords, agencies and brokers',
     icon: 'users',
     badge: 'users',
+    aclKey: 'users',
   },
   {
     path: '/admin/staff',
@@ -36,6 +64,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     subtitle: 'Moderators, managers, finance auditors and admins',
     icon: 'staff',
     badge: 'staff',
+    aclKey: 'staff',
   },
   {
     path: '/admin/properties',
@@ -44,6 +73,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     subtitle: 'Review, approve and moderate listings',
     icon: 'properties',
     badge: 'properties',
+    aclKey: 'properties',
   },
   {
     path: '/admin/agencies',
@@ -52,6 +82,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     subtitle: 'Approve and oversee partner organizations',
     icon: 'brokers',
     badge: 'agencies',
+    aclKey: 'agencies',
   },
   {
     path: '/admin/inquiries',
@@ -60,6 +91,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     subtitle: 'Questions from the app, and the replies that go back',
     icon: 'content',
     badge: 'inquiries',
+    aclKey: 'inquiries',
   },
   {
     path: '/admin/viewings',
@@ -68,6 +100,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     subtitle: 'Appointments customers have asked for',
     icon: 'reports',
     badge: 'viewings',
+    aclKey: 'viewings',
   },
   {
     path: '/admin/bookings',
@@ -76,6 +109,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     subtitle: 'What is booked, what is owed, and which tenancies are running',
     icon: 'brokers',
     badge: 'bookings',
+    aclKey: 'bookings',
   },
   {
     path: '/admin/payments',
@@ -84,6 +118,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     subtitle: 'Rent collected, split between partners, and disbursed to them',
     icon: 'payments',
     badge: 'payments',
+    aclKey: 'payments',
   },
   {
     path: '/admin/dictionaries',
@@ -91,6 +126,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     title: 'Dictionaries & Master Data',
     subtitle: 'Geography, property types, amenities and more',
     icon: 'content',
+    aclKey: 'dictionaries',
   },
   {
     path: '/admin/settings',
@@ -98,12 +134,14 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     title: 'Platform Settings',
     subtitle: 'Commission, listings and operational configuration',
     icon: 'settings',
+    aclKey: 'settings',
   },
   {
     path: '/admin/audit',
     label: 'Audit log',
     title: 'Audit Log',
     subtitle: 'Every change on the platform, recorded by the database',
+    aclKey: 'audit',
     icon: 'reports',
   },
 ];

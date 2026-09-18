@@ -248,6 +248,7 @@ export function createFakeAdminApi(overrides: Partial<AdminApi> = {}): AdminApi 
         throw new AdminApiError('CONFLICT', 'That phone number is already registered', 409);
       }
       const isStaff = ['moderator', 'manager', 'finance_auditor', 'admin'].includes(String(body.role));
+      const allowedRoutes = isStaff && body.role !== 'admin' ? ((body.allowedRoutes as string[]) ?? []) : null;
       const created: AdminUser = {
         id: `user-${users.length + 1}`,
         phone_number: (body.phoneNumber as string) ?? null,
@@ -262,6 +263,8 @@ export function createFakeAdminApi(overrides: Partial<AdminApi> = {}): AdminApi 
         last_login_at: null,
         created_at: new Date().toISOString(),
         is_staff: isStaff,
+        allowed_routes: allowedRoutes,
+        ...(isStaff ? {initial_password: 'Fake1nit-Pass'} : {}),
       };
       users.unshift(created);
       return created;
@@ -270,7 +273,12 @@ export function createFakeAdminApi(overrides: Partial<AdminApi> = {}): AdminApi 
     async updateUser(id, body) {
       const user = users.find((u) => u.id === id);
       if (!user) throw new AdminApiError('NOT_FOUND', 'User not found', 404);
-      Object.assign(user, {full_name: (body.fullName as string) ?? user.full_name});
+      Object.assign(user, {
+        full_name: (body.fullName as string) ?? user.full_name,
+        role: (body.role as string) ?? user.role,
+        job_title: body.jobTitle !== undefined ? (body.jobTitle as string) : user.job_title,
+        allowed_routes: body.allowedRoutes !== undefined ? (body.allowedRoutes as string[]) : user.allowed_routes,
+      });
       return user;
     },
 

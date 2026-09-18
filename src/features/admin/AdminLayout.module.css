@@ -1,6 +1,7 @@
 .shell {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   font-family: var(--font-family-base);
 }
 
@@ -9,6 +10,10 @@
 .sidebar {
   width: 240px;
   flex-shrink: 0;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
   background: var(--color-sidebar-bg);
   display: flex;
   flex-direction: column;
@@ -20,6 +25,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4xl);
+  min-height: 0;
 }
 
 .logoRow {
@@ -170,14 +176,19 @@
 .contentWrapper {
   flex: 1;
   min-width: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--color-bg-page);
+  overflow: hidden;
 }
 
 .topBar {
   min-height: 72px;
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 30;
   background: var(--color-white);
   border-bottom: 1px solid var(--color-border-default);
   display: flex;
@@ -290,6 +301,7 @@
 
 .mainBody {
   flex: 1;
+  min-height: 0;
   padding: var(--radius-2xl);
   overflow-y: auto;
 }
