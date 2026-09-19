@@ -1,3 +1,5 @@
+import {API_BASE_URL as ENV_API_BASE_URL} from '../config/env';
+
 export interface Page<T> {
   items: T[];
   pagination: {total: number; limit: number; offset: number; hasMore: boolean};
@@ -750,7 +752,7 @@ export interface AdminApi {
   settingHistory(key: string): Promise<{items: {old_value: unknown; new_value: unknown; changed_by: string | null; changed_at: string}[]}>;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
+const API_BASE_URL = ENV_API_BASE_URL;
 
 function toQueryString(params: Record<string, unknown> = {}) {
   const search = new URLSearchParams();

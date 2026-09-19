@@ -1,3 +1,5 @@
+import {API_BASE_URL} from '../config/env';
+
 export type AdminRole = 'admin' | 'moderator' | 'manager' | 'finance_auditor';
 
 export interface AdminAccount {
@@ -38,8 +40,6 @@ export interface AdminAuthClient {
   login(email: string, password: string): Promise<AdminLoginResult>;
   me(token: string): Promise<AdminAccount>;
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
 
 async function parseJsonOrThrow(response: Response) {
   const body = await response.json().catch(() => ({}));
