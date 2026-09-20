@@ -386,10 +386,10 @@ export function PropertyFormModal({
               />
             </Field>
             <Field label="Bedrooms" htmlFor="p-bedrooms">
-              <TextInput id="p-bedrooms" type="number" min="0" value={form.bedrooms} onChange={(e) => set('bedrooms', e.target.value)} />
+              <TextInput id="p-bedrooms" type="number" min="0" max="50" value={form.bedrooms} onChange={(e) => set('bedrooms', e.target.value)} />
             </Field>
             <Field label="Bathrooms" htmlFor="p-bathrooms">
-              <TextInput id="p-bathrooms" type="number" min="0" value={form.bathrooms} onChange={(e) => set('bathrooms', e.target.value)} />
+              <TextInput id="p-bathrooms" type="number" min="0" max="50" value={form.bathrooms} onChange={(e) => set('bathrooms', e.target.value)} />
             </Field>
             <Field label="Size (sqm)" htmlFor="p-size">
               <TextInput id="p-size" type="number" min="0" value={form.sizeSqm} onChange={(e) => set('sizeSqm', e.target.value)} />
@@ -398,19 +398,19 @@ export function PropertyFormModal({
               <Select id="p-furnishing" options={FURNISHING} value={form.furnishing} onChange={(e) => set('furnishing', e.target.value)} />
             </Field>
             <Field label="Floor" htmlFor="p-floor">
-              <TextInput id="p-floor" type="number" value={form.floorNumber} onChange={(e) => set('floorNumber', e.target.value)} />
+              <TextInput id="p-floor" type="number" min="-5" max="200" value={form.floorNumber} onChange={(e) => set('floorNumber', e.target.value)} />
             </Field>
             <Field label="Floors in building" htmlFor="p-total-floors">
-              <TextInput id="p-total-floors" type="number" value={form.totalFloors} onChange={(e) => set('totalFloors', e.target.value)} />
+              <TextInput id="p-total-floors" type="number" min="0" max="200" value={form.totalFloors} onChange={(e) => set('totalFloors', e.target.value)} />
             </Field>
             <Field label="Year built" htmlFor="p-year">
-              <TextInput id="p-year" type="number" value={form.yearBuilt} onChange={(e) => set('yearBuilt', e.target.value)} />
+              <TextInput id="p-year" type="number" min="1800" max="2100" value={form.yearBuilt} onChange={(e) => set('yearBuilt', e.target.value)} />
             </Field>
             <Field label="Parking spaces" htmlFor="p-parking">
-              <TextInput id="p-parking" type="number" min="0" value={form.parkingSpaces} onChange={(e) => set('parkingSpaces', e.target.value)} />
+              <TextInput id="p-parking" type="number" min="0" max="500" value={form.parkingSpaces} onChange={(e) => set('parkingSpaces', e.target.value)} />
             </Field>
             <Field label="Maximum occupants" htmlFor="p-occupants">
-              <TextInput id="p-occupants" type="number" min="1" value={form.maxOccupants} onChange={(e) => set('maxOccupants', e.target.value)} />
+              <TextInput id="p-occupants" type="number" min="1" max="500" value={form.maxOccupants} onChange={(e) => set('maxOccupants', e.target.value)} />
             </Field>
             <label className={styles.checkbox}>
               <input type="checkbox" checked={form.petsAllowed} onChange={(e) => set('petsAllowed', e.target.checked)} />
@@ -494,6 +494,7 @@ export function PropertyFormModal({
                   id="p-custom-months"
                   type="number"
                   min="1"
+                  max="120"
                   value={form.customPaymentMonths}
                   onChange={(e) => set('customPaymentMonths', e.target.value)}
                   required
@@ -507,13 +508,13 @@ export function PropertyFormModal({
               <TextInput id="p-advance" type="number" min="0" step="0.5" value={form.advanceRentMonths} onChange={(e) => set('advanceRentMonths', e.target.value)} />
             </Field>
             <Field label="Minimum lease (months)" htmlFor="p-min-lease">
-              <TextInput id="p-min-lease" type="number" min="1" value={form.minLeaseMonths} onChange={(e) => set('minLeaseMonths', e.target.value)} />
+              <TextInput id="p-min-lease" type="number" min="1" max="120" value={form.minLeaseMonths} onChange={(e) => set('minLeaseMonths', e.target.value)} />
             </Field>
             <Field label="Maximum lease (months)" htmlFor="p-max-lease">
-              <TextInput id="p-max-lease" type="number" min="1" value={form.maxLeaseMonths} onChange={(e) => set('maxLeaseMonths', e.target.value)} />
+              <TextInput id="p-max-lease" type="number" min="1" max="120" value={form.maxLeaseMonths} onChange={(e) => set('maxLeaseMonths', e.target.value)} />
             </Field>
             <Field label="Notice period (days)" htmlFor="p-notice">
-              <TextInput id="p-notice" type="number" min="0" value={form.noticePeriodDays} onChange={(e) => set('noticePeriodDays', e.target.value)} />
+              <TextInput id="p-notice" type="number" min="0" max="365" value={form.noticePeriodDays} onChange={(e) => set('noticePeriodDays', e.target.value)} />
             </Field>
             <Field label="Available from" htmlFor="p-available">
               <TextInput id="p-available" type="date" value={form.availableFrom} onChange={(e) => set('availableFrom', e.target.value)} />
