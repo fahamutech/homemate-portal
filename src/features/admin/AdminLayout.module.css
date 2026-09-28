@@ -109,6 +109,12 @@
   flex: 1;
 }
 
+.sidebarBottom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
 .userProfile {
   display: flex;
   align-items: center;

@@ -8,6 +8,7 @@ import {useAttention} from './attentionContext';
 import {humanise} from '../../components/ui';
 import bellIcon from '../../assets/icons/bell.svg';
 import searchIcon from '../../assets/icons/search.svg';
+import {InstallAppButton} from '../../pwa/InstallAppButton';
 import styles from './AdminLayout.module.css';
 
 export interface AdminLayoutProps {
@@ -103,6 +104,8 @@ export function AdminLayout({admin, onLogout}: AdminLayoutProps) {
           </nav>
         </div>
 
+        <div className={styles.sidebarBottom}>
+        <InstallAppButton />
         <div className={styles.userProfile}>
           <div className={styles.avatar}>{initialsFor(admin.email)}</div>
           <div className={styles.userInfo}>
@@ -110,6 +113,7 @@ export function AdminLayout({admin, onLogout}: AdminLayoutProps) {
             <p className={styles.userRole}>{ROLE_LABELS[admin.role] ?? humanise(admin.role)}</p>
           </div>
           <button className={styles.logoutButton} onClick={onLogout}>Log out</button>
+        </div>
         </div>
       </aside>
 

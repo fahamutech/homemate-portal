@@ -4,6 +4,7 @@ import {httpAdminAuthClient, AdminAuthApiError, type AdminAuthClient, type Admin
 import homeIcon from '../../assets/icons/home.svg';
 import eyeOffIcon from '../../assets/icons/eye-off.svg';
 import styles from './AdminLoginScreen.module.css';
+import {InstallAppButton} from '../../pwa/InstallAppButton';
 
 export interface AdminLoginScreenProps {
   /** Defaults to the real backend client; tests inject a fake. */
@@ -117,6 +118,7 @@ export function AdminLoginScreen({client = httpAdminAuthClient, onAuthenticated}
               {isSubmitting ? 'Signing in…' : 'Sign In to Backoffice'}
             </button>
             <p className={styles.disclaimer}>Access restricted to authorized personnel only. IP address logged.</p>
+            <InstallAppButton tone="onLight" />
           </div>
         </form>
       </div>
