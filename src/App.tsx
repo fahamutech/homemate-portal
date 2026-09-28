@@ -18,6 +18,7 @@ import {AuditPage} from './features/admin/AuditPage';
 import {PaymentsPage} from './features/admin/PaymentsPage';
 import {InquiriesPage} from './features/admin/InquiriesPage';
 import {RentalsPage} from './features/admin/RentalsPage';
+import {UpdateBanner} from './pwa/UpdateBanner';
 
 /** The admin console, mounted once a session exists. */
 export function AdminRoutes({token, admin, onLogout}: {token: string; admin: AdminAccount; onLogout: () => void}) {
@@ -63,6 +64,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <UpdateBanner />
       {state.status === 'authenticated' ? (
         <AdminRoutes token={state.session.token} admin={state.session.admin} onLogout={logout} />
       ) : (

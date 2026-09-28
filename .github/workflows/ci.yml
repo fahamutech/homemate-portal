@@ -32,7 +32,11 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
+      # The run number is stamped into the bundle and into dist/version.json;
+      # open tabs compare the two to offer a reload after a deploy.
       - run: npm run build
+        env:
+          APP_BUILD_NUMBER: ${{ github.run_number }}
 
       - name: Deploy to Firebase Hosting
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

@@ -2,12 +2,85 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Back office for HomeMate Africa." />
+
+    <!-- The sidebar's navy: the installed app's title bar and Chrome's toolbar
+         read as part of the console rather than a strip of browser. -->
+    <meta name="theme-color" content="#0f1729" />
+    <meta name="color-scheme" content="light" />
+
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="HomeMate Admin" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <title>HomeMate Africa — Partner Portal</title>
+
+    <style>
+      /* Shown until React's first render replaces #root's contents. */
+      .hm-boot {
+        position: fixed; inset: 0;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+        background: #f8fafc; color: #64748b;
+        font: 500 13px/1.3 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      .hm-boot svg { width: 56px; height: 56px; }
+      .hm-boot .hm-bar { position: relative; overflow: hidden; width: 96px; height: 3px; border-radius: 3px; background: #e2e8f0; }
+      .hm-boot .hm-bar::after {
+        content: ''; position: absolute; top: 0; left: -40%; width: 40%; height: 100%;
+        border-radius: 3px; background: #059676; animation: hm-slide 1.1s ease-in-out infinite;
+      }
+      @keyframes hm-slide { to { left: 100%; } }
+      @media (prefers-reduced-motion: reduce) { .hm-boot .hm-bar::after { animation: none; left: 0; width: 100%; opacity: .4; } }
+    </style>
+
+    <script>
+      // beforeinstallprompt fires once, often before the bundle has parsed,
+      // so it is caught here and held for the app (src/pwa/pwa.ts).
+      (function () {
+        var deferred = null;
+        var nav = window.navigator;
+        var ua = nav.userAgent || '';
+        var isIos = /iphone|ipad|ipod/i.test(ua) || (nav.platform === 'MacIntel' && nav.maxTouchPoints > 1 && !/android/i.test(ua));
+        window.hmPwa = {
+          isIos: isIos,
+          isMobile: isIos || /android|mobi/i.test(ua),
+          isStandalone: function () {
+            return window.matchMedia('(display-mode: standalone)').matches || nav.standalone === true;
+          },
+          canPrompt: function () { return deferred !== null; },
+          prompt: function () {
+            if (!deferred) return Promise.resolve('unavailable');
+            var event = deferred;
+            deferred = null;
+            event.prompt();
+            return event.userChoice.then(function (choice) { return choice.outcome; });
+          },
+        };
+        window.addEventListener('beforeinstallprompt', function (event) {
+          event.preventDefault();
+          deferred = event;
+          window.dispatchEvent(new Event('hm-pwa-change'));
+        });
+        window.addEventListener('appinstalled', function () {
+          deferred = null;
+          window.dispatchEvent(new Event('hm-pwa-change'));
+        });
+      })();
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="hm-boot" role="progressbar" aria-label="Loading the partner portal">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#059676"/><path d="M16 30 32 17l16 13M20 27v20h24V27M29 47v-8h6v8" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="hm-bar"></div>
+      </div>
+    </div>
+    <noscript>The HomeMate partner portal needs JavaScript.</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
