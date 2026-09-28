@@ -1,8 +1,7 @@
 name: CI
 
 # Every push and pull request: lint, the component tests, and the production
-# build (typecheck + Vite), uploaded as an artifact so a green run is a
-# deployable `dist/`.
+# build (typecheck + Vite).
 
 on:
   push:
@@ -30,8 +29,3 @@ jobs:
       - run: npm test
       - run: npm run build
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: portal-dist
-          path: dist
-          retention-days: 7
