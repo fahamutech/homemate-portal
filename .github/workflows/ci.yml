@@ -1,7 +1,11 @@
 name: CI
 
 # Every push and pull request: lint, the component tests, and the production
-# build (typecheck + Vite).
+# build (typecheck + Vite). A push to main also deploys dist/ to the live
+# channel of the default Firebase Hosting site of homematetz.
+#
+# Secret (Settings → Secrets and variables → Actions):
+#   FIREBASE_SERVICE_ACCOUNT_HOMEMATETZ  service-account JSON, Firebase Hosting Admin
 
 on:
   push:
@@ -10,7 +14,8 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Never cancel a deploy half-way through.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -29,3 +34,11 @@ jobs:
       - run: npm test
       - run: npm run build
 
+      - name: Deploy to Firebase Hosting
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_HOMEMATETZ }}
+          projectId: homematetz
+          channelId: live
