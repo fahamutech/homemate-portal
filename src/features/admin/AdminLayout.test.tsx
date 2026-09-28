@@ -41,8 +41,6 @@ function badges(overrides: Partial<AttentionSnapshot['badges']> = {}): Attention
     staff: 0,
     payments: 0,
     inquiries: 0,
-    viewings: 0,
-    bookings: 0,
     ...overrides,
   };
 }

@@ -8,10 +8,11 @@ import {CollectionsTab, money} from './CollectionsTab';
 import {PaymentQueueTab} from './PaymentQueueTab';
 import {DisbursementsTab} from './DisbursementsTab';
 import {LedgerTab} from './LedgerTab';
+import {CommissionsTab} from './CommissionsTab';
 import {PaymentMethodsTab} from './PaymentMethodsTab';
 import styles from './MoneyTabs.module.css';
 
-const TABS = ['To verify', 'Collections', 'Disbursements', 'Ledger', 'Methods'] as const;
+const TABS = ['To verify', 'Collections', 'Commissions', 'Disbursements', 'Ledger', 'Methods'] as const;
 type Tab = (typeof TABS)[number];
 
 /**
@@ -20,9 +21,10 @@ type Tab = (typeof TABS)[number];
  * HomeMate connects a tenant to a landlord, an agency and a broker; it does
  * not own the rent. So this screen follows one shilling all the way through:
  * collected from the tenant, split between the people owed it, disbursed to
- * them, with HomeMate's commission the only part that stays. The summary at
- * the top is that sentence as numbers, and it comes from the database rather
- * than being added up here.
+ * them. The only part that stays is HomeMate's share of the tenant fee — the
+ * Commissions tab lists it placement by placement. The summary at the top is
+ * that sentence as numbers, and it comes from the database rather than being
+ * added up here.
  */
 export function PaymentsPage() {
   const api = useAdminApi();
@@ -32,7 +34,9 @@ export function PaymentsPage() {
   // The one search box in the top bar means different things per tab, which is
   // exactly what it is for: it searches what you are looking at.
   const searchTerm = useAdminSearch(
-    tab === 'Disbursements' ? 'Payout reference or beneficiary' : 'Reference, payer or property'
+    tab === 'Disbursements' ? 'Payout reference or beneficiary'
+      : tab === 'Commissions' ? 'Reference, property or customer'
+      : 'Reference, payer or property'
   );
 
   const summary = useResource(() => api.moneySummary(), `money-summary-${attention.counts.paymentsPending ?? 0}`);
@@ -52,7 +56,7 @@ export function PaymentsPage() {
   return (
     <PageSection
       title="Payments"
-      description="Rent collected from tenants, split between landlords, brokers and agencies, and disbursed to them."
+      description="Payments verified, the tenant fee split into HomeMate’s commission and the agent’s share, and everyone paid out."
     >
       <div className={styles.summaryCards}>
         <div className={styles.summaryCard}>
@@ -78,7 +82,7 @@ export function PaymentsPage() {
         <div className={styles.summaryCard}>
           <p className={styles.summaryLabel}>HomeMate commission</p>
           <p className={styles.summaryValue}>{money(figures?.platform_revenue)}</p>
-          <p className={styles.summaryNote}>What the platform keeps</p>
+          <p className={styles.summaryNote}>Its share of verified tenant fees</p>
         </div>
       </div>
 
@@ -114,6 +118,7 @@ export function PaymentsPage() {
       {tab === 'Disbursements' && (
         <DisbursementsTab searchTerm={searchTerm} onChanged={refreshEverything} />
       )}
+      {tab === 'Commissions' && <CommissionsTab searchTerm={searchTerm} />}
       {tab === 'Ledger' && <LedgerTab />}
       {tab === 'Methods' && <PaymentMethodsTab />}
     </PageSection>

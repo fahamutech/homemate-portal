@@ -26,11 +26,22 @@ export function SettingsPage() {
   const [historyKey, setHistoryKey] = useState<string | null>(null);
 
   const grouped = state.data?.grouped ?? {};
+  const byKey = new Map((state.data?.items ?? []).map((setting) => [setting.key, setting]));
+  const tenantFee = byKey.get('commission.tenant_fee_percentage');
+  const platformShare = byKey.get('commission.platform_percentage');
 
   return (
     <PageSection title="Platform settings" description="Commission rates, listing rules and operational configuration.">
       {state.status === 'error' && (
         <div className={fieldStyles.errorBlock} role="alert">{state.error}</div>
+      )}
+
+      {tenantFee && platformShare && (
+        <TenantFeeCard
+          tenantFeePercentage={Number(tenantFee.value)}
+          platformPercentage={Number(platformShare.value)}
+          onEdit={(key) => setEditing(byKey.get(key) ?? null)}
+        />
       )}
 
       {Object.entries(grouped).map(([category, settings]) => (
@@ -78,6 +89,84 @@ export function SettingsPage() {
   );
 }
 
+const EXAMPLE_RENT = 1_000_000;
+
+function tzs(value: number) {
+  return `TZS ${Math.round(value).toLocaleString()}`;
+}
+
+/**
+ * What the two commission settings mean, in shillings, for a typical home.
+ *
+ * The customer pays a share of one month's rent as the tenant fee instead of
+ * the usual month's agent fee, and sees the difference as a saving. HomeMate
+ * keeps a share *of the fee*; the listing agent — or the landlord, if they
+ * listed it themselves — gets the rest. Rent and deposits are never touched.
+ */
+function TenantFeeCard({
+  tenantFeePercentage,
+  platformPercentage,
+  onEdit,
+}: {
+  tenantFeePercentage: number;
+  platformPercentage: number;
+  onEdit: (key: string) => void;
+}) {
+  const fee = (EXAMPLE_RENT * tenantFeePercentage) / 100;
+  const saving = Math.max(EXAMPLE_RENT - fee, 0);
+  const platform = (fee * platformPercentage) / 100;
+  const agent = fee - platform;
+
+  return (
+    <Card>
+      <h3 style={{margin: '0 0 var(--space-sm) 0', fontSize: 14, color: 'var(--color-text-primary)'}}>
+        The tenant fee and HomeMate’s commission
+      </h3>
+      <p style={{margin: '0 0 var(--space-lg) 0', fontSize: 13, color: 'var(--color-text-secondary)'}}>
+        Charged once, in the customer’s first payment. HomeMate earns nothing from rent or deposits —
+        only its share of this fee. A change applies to new checkouts; a reservation already under way
+        keeps the fee its customer was shown.
+      </p>
+      <DataTable<{id: string; label: string; value: string; note: string}>
+        status="ready"
+        rows={[
+          {
+            id: 'fee',
+            label: `Customer pays ${tenantFeePercentage}% of one month’s rent`,
+            value: tzs(fee),
+            note: `Saves ${tzs(saving)} against the usual one-month agent fee`,
+          },
+          {
+            id: 'platform',
+            label: `HomeMate keeps ${platformPercentage}% of the fee`,
+            value: tzs(platform),
+            note: 'Listing commission',
+          },
+          {
+            id: 'agent',
+            label: 'The listing agent receives the rest of the fee',
+            value: tzs(agent),
+            note: 'The landlord receives it when they listed the home themselves',
+          },
+        ]}
+        columns={[
+          {key: 'label', header: `On a rent of ${tzs(EXAMPLE_RENT)} a month`, render: (row) => row.label},
+          {key: 'value', header: 'Amount', render: (row) => <strong>{row.value}</strong>},
+          {key: 'note', header: '', render: (row) => row.note},
+        ]}
+      />
+      <RowActions>
+        <Button variant="outline" size="small" onClick={() => onEdit('commission.tenant_fee_percentage')}>
+          Change the tenant fee
+        </Button>
+        <Button variant="outline" size="small" onClick={() => onEdit('commission.platform_percentage')}>
+          Change HomeMate’s share
+        </Button>
+      </RowActions>
+    </Card>
+  );
+}
+
 function EditSettingModal({
   setting,
   onClose,
@@ -89,7 +178,8 @@ function EditSettingModal({
 }) {
   const api = useAdminApi();
   const isBoolean = typeof setting.value === 'boolean';
-  const isNumber = typeof setting.value === 'number';
+  const isPercentage = setting.key.startsWith('commission.') && setting.key.endsWith('percentage');
+  const isNumber = typeof setting.value === 'number' || isPercentage;
   const [value, setValue] = useState(String(setting.value ?? ''));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,6 +199,9 @@ function EditSettingModal({
       if (isNumber && Number.isNaN(parsed as number)) {
         throw new Error('This setting expects a number');
       }
+      if (isPercentage && ((parsed as number) < 0 || (parsed as number) > 100)) {
+        throw new Error('This is a percentage, so it must be from 0 to 100');
+      }
       await api.updateSetting(setting.key, parsed);
       onSaved();
     } catch (err) {
@@ -122,7 +215,7 @@ function EditSettingModal({
     <Modal title={setting.description ?? setting.key} description={setting.key} onClose={onClose}>
       <form onSubmit={handleSubmit} className={fieldStyles.modalBody}>
         {error && <div className={fieldStyles.errorBlock} role="alert">{error}</div>}
-        <Field label="Value" htmlFor="setting-value">
+        <Field label={isPercentage ? 'Percentage (0–100)' : 'Value'} htmlFor="setting-value">
           {isBoolean ? (
             <select
               id="setting-value"

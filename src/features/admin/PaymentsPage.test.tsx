@@ -39,6 +39,44 @@ function openRow(user: ReturnType<typeof userEvent.setup>, text: RegExp | string
 }
 
 describe('PaymentsPage', () => {
+  test('the Commissions tab lists each tenant fee with HomeMate’s share and the agent’s', async () => {
+    const user = userEvent.setup();
+    renderAdminScreen(<PaymentsPage />);
+    await user.click(await screen.findByRole('button', {name: /^commissions$/i}));
+
+    const row = within((await screen.findByText('HM-BK-000001')).closest('tr')!);
+    expect(row.getByText('TZS 750,000')).toBeInTheDocument();
+    expect(row.getByText('TZS 75,000')).toBeInTheDocument();
+    expect(row.getByText('10% of the fee')).toBeInTheDocument();
+    expect(row.getByText('Asha Broker · Broker')).toBeInTheDocument();
+    expect(row.getByText('Verified')).toBeInTheDocument();
+
+    const direct = within(screen.getByText('HM-BK-000002').closest('tr')!);
+    expect(direct.getByText('Landlord (listed directly)')).toBeInTheDocument();
+    expect(direct.getByText('Pending')).toBeInTheDocument();
+
+    // Totals: fees 1,150,000; HomeMate 115,000 of which 75,000 is verified.
+    expect(screen.getByText('TZS 1,150,000')).toBeInTheDocument();
+    expect(screen.getByText('TZS 115,000')).toBeInTheDocument();
+    expect(screen.getByText('TZS 75,000 verified')).toBeInTheDocument();
+  });
+
+  test('the Commissions tab filters to verified placements', async () => {
+    const api = createFakeAdminApi();
+    const listCommissions = vi.spyOn(api, 'listCommissions');
+    const user = userEvent.setup();
+    renderAdminScreen(<PaymentsPage />, {api});
+    await user.click(await screen.findByRole('button', {name: /^commissions$/i}));
+    await screen.findByText('HM-BK-000001');
+
+    await user.selectOptions(screen.getByLabelText(/^payment$/i), 'true');
+
+    await waitFor(() => {
+      expect(listCommissions).toHaveBeenLastCalledWith(expect.objectContaining({settled: 'true'}));
+    });
+    await waitFor(() => expect(screen.queryByText('HM-BK-000002')).not.toBeInTheDocument());
+  });
+
   test('opens on the verification queue, because that is what people are waiting on', async () => {
     renderAdminScreen(<PaymentsPage />);
 
@@ -49,7 +87,7 @@ describe('PaymentsPage', () => {
     expect(screen.getByText(/owed to partners/i)).toBeInTheDocument();
   });
 
-  test('a recorded collection is pending and already split three ways', async () => {
+  test('rent recorded by hand is pending and belongs to the landlord whole', async () => {
     const user = userEvent.setup();
     renderAdminScreen(<PaymentsPage />);
     await openCollections(user);
@@ -60,10 +98,9 @@ describe('PaymentsPage', () => {
     expect(row.getByText('Pending')).toBeInTheDocument();
 
     const detail = await openRow(user, /HM-PAY-/);
-    // 10% commission, the rest to the landlord; no broker on the fixture.
-    expect(detail.getByText(/Platform/)).toBeInTheDocument();
-    expect(detail.getByText('TZS 100,000')).toBeInTheDocument();
-    expect(detail.getByText('TZS 900,000')).toBeInTheDocument();
+    // HomeMate's commission comes only from the tenant fee, never from rent.
+    expect(detail.queryByText(/Platform/)).not.toBeInTheDocument();
+    expect(detail.getAllByText('TZS 1,000,000').length).toBeGreaterThan(0);
   });
 
   test('a pending collection offers reconciliation, not a "mark successful" button', async () => {
@@ -88,7 +125,7 @@ describe('PaymentsPage', () => {
 
     expect(await detail.findByText('Successful')).toBeInTheDocument();
     expect(detail.getByText('cash.collections')).toBeInTheDocument();
-    expect(detail.getByText('revenue.commission')).toBeInTheDocument();
+    expect(detail.queryByText('revenue.commission')).not.toBeInTheDocument();
   });
 
   test('marking a collection failed requires a reason', async () => {
@@ -133,7 +170,7 @@ describe('PaymentsPage', () => {
     await user.click(screen.getByRole('button', {name: /disbursements/i}));
 
     const row = within((await screen.findByText('Amina Hassan')).closest('tr')!);
-    expect(row.getByText('TZS 900,000')).toBeInTheDocument();
+    expect(row.getByText('TZS 1,000,000')).toBeInTheDocument();
     // HomeMate's own share is not a debt to anyone, so it is not listed here.
     expect(screen.queryByText('HomeMate')).not.toBeInTheDocument();
   });
@@ -241,7 +278,7 @@ describe('PaymentsPage', () => {
     const payAgain = await screen.findByRole('button', {name: /pay out/i});
     const owedAgain = within(payAgain.closest('tr')!);
     expect(owedAgain.getByText('Amina Hassan')).toBeInTheDocument();
-    expect(owedAgain.getByText('TZS 900,000')).toBeInTheDocument();
+    expect(owedAgain.getByText('TZS 1,000,000')).toBeInTheDocument();
   });
 
   test('the ledger is presented as a record, with nothing to edit', async () => {

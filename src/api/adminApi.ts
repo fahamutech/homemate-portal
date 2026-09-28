@@ -245,8 +245,6 @@ export interface AttentionSnapshot {
     staff: number;
     payments: number;
     inquiries: number;
-    viewings: number;
-    bookings: number;
   };
 }
 
@@ -276,31 +274,12 @@ export interface Inquiry {
   owner_name: string | null;
   has_viewing: boolean;
   has_booking: boolean;
-}
-
-export interface Viewing {
-  id: string;
-  reference: string;
-  status: string;
-  scheduled_for: string;
-  duration_minutes: number;
-  meeting_point: string | null;
-  customer_note: string | null;
-  host_note: string | null;
-  cancellation_reason: string | null;
-  confirmed_at: string | null;
-  created_at: string;
-  property_id: string;
-  property_reference: string;
-  property_title: string;
-  property_address: string | null;
-  cover_media_id: string | null;
-  customer_id: string;
-  customer_name: string | null;
-  customer_phone: string | null;
-  host_name: string | null;
-  host_phone: string | null;
-  is_upcoming: boolean;
+  /**
+   * Where the whole journey stands once the landlord has accepted: the
+   * enquiry is followed by the money — awaiting_payment, awaiting_verification,
+   * paid. Falls back to `status` before that.
+   */
+  display_status?: string;
 }
 
 export interface Booking {
@@ -327,6 +306,45 @@ export interface Booking {
   customer_name: string | null;
   customer_phone: string | null;
   landlord_name: string | null;
+  /** The tenant fee charged in the first payment, snapshotted at checkout. */
+  service_fee?: string;
+  service_fee_percentage?: string | null;
+  platform_fee_percentage?: string | null;
+  platform_fee?: string;
+}
+
+/**
+ * One placement's commission: the tenant fee, HomeMate's share of it, and the
+ * listing agent's share. Rent is never commissioned, so this is the whole of
+ * the platform's placement revenue.
+ */
+export interface CommissionRow {
+  id: string;
+  reference: string;
+  status: string;
+  created_at: string;
+  property_id: string;
+  property_reference: string;
+  property_title: string;
+  customer_name: string | null;
+  monthly_rent: string;
+  currency: string;
+  service_fee: string;
+  service_fee_percentage: string | null;
+  platform_fee_percentage: string | null;
+  platform_fee: string;
+  agent_fee: string;
+  settled: boolean;
+  agent_type: string | null;
+  agent_name: string | null;
+}
+
+export interface CommissionTotals {
+  fees: string;
+  platform: string;
+  agents: string;
+  platform_settled: string;
+  placements: string;
 }
 
 export interface BookingDetail extends Booking {
@@ -727,13 +745,11 @@ export interface AdminApi {
   createPayout(body: Record<string, unknown>): Promise<PayoutDetail>;
   changePayoutStatus(id: string, body: {status: string; reason?: string; providerReference?: string}): Promise<PayoutDetail>;
   listLedger(params?: Record<string, unknown>): Promise<Page<LedgerEntry>>;
+  listCommissions(params?: Record<string, unknown>): Promise<Page<CommissionRow> & {totals: CommissionTotals}>;
 
   listInquiries(params?: Record<string, unknown>): Promise<Page<Inquiry>>;
   getInquiry(id: string): Promise<Inquiry>;
   respondToInquiry(id: string, body: Record<string, unknown>): Promise<Inquiry>;
-
-  listViewings(params?: Record<string, unknown>): Promise<Page<Viewing>>;
-  changeViewingStatus(id: string, body: Record<string, unknown>): Promise<Viewing>;
 
   listBookings(params?: Record<string, unknown>): Promise<Page<Booking>>;
   getBooking(id: string): Promise<BookingDetail>;
@@ -889,13 +905,12 @@ export function createHttpAdminApi(token: string, baseUrl: string = API_BASE_URL
     createPayout: (body) => request('/admin/payouts', {method: 'POST', body}),
     changePayoutStatus: (id, body) => request(`/admin/payouts/${id}/status`, {method: 'POST', body}),
     listLedger: (params) => request(`/admin/ledger${toQueryString(params)}`),
+    listCommissions: (params) => request(`/admin/money/commissions${toQueryString(params)}`),
 
     listInquiries: (params) => request(`/admin/inquiries${toQueryString(params)}`),
     getInquiry: (id) => request(`/admin/inquiries/${id}`),
     respondToInquiry: (id, body) => request(`/admin/inquiries/${id}/respond`, {method: 'POST', body}),
 
-    listViewings: (params) => request(`/admin/viewings${toQueryString(params)}`),
-    changeViewingStatus: (id, body) => request(`/admin/viewings/${id}/status`, {method: 'POST', body}),
 
     listBookings: (params) => request(`/admin/bookings${toQueryString(params)}`),
     getBooking: (id) => request(`/admin/bookings/${id}`),

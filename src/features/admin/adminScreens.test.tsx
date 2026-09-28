@@ -246,17 +246,17 @@ describe('SettingsPage', () => {
     const updateSetting = vi.spyOn(api, 'updateSetting');
     const user = userEvent.setup();
     renderAdminScreen(<SettingsPage />, {api});
-    await screen.findByText('Broker commission %');
+    await screen.findByText('HomeMate’s share of the tenant fee');
 
-    await user.click(within(screen.getByText('Broker commission %').closest('tr')!).getByRole('button', {name: /edit/i}));
+    await user.click(within(screen.getByText('HomeMate’s share of the tenant fee').closest('tr')!).getByRole('button', {name: /edit/i}));
     const form = within(await screen.findByRole('dialog'));
-    const input = form.getByLabelText(/value/i);
+    const input = form.getByLabelText(/percentage/i);
     await user.clear(input);
     await user.type(input, '7.5');
     await user.click(form.getByRole('button', {name: /^save$/i}));
 
     await waitFor(() => {
-      expect(updateSetting).toHaveBeenCalledWith('commission.broker_percentage', 7.5);
+      expect(updateSetting).toHaveBeenCalledWith('commission.platform_percentage', 7.5);
     });
   });
 
@@ -265,11 +265,11 @@ describe('SettingsPage', () => {
     const updateSetting = vi.spyOn(api, 'updateSetting');
     const user = userEvent.setup();
     renderAdminScreen(<SettingsPage />, {api});
-    await screen.findByText('Broker commission %');
+    await screen.findByText('HomeMate’s share of the tenant fee');
 
-    await user.click(within(screen.getByText('Broker commission %').closest('tr')!).getByRole('button', {name: /edit/i}));
+    await user.click(within(screen.getByText('HomeMate’s share of the tenant fee').closest('tr')!).getByRole('button', {name: /edit/i}));
     const form = within(await screen.findByRole('dialog'));
-    const input = form.getByLabelText(/value/i);
+    const input = form.getByLabelText(/percentage/i);
     await user.clear(input);
     await user.type(input, 'abc');
     await user.click(form.getByRole('button', {name: /^save$/i}));
@@ -278,12 +278,41 @@ describe('SettingsPage', () => {
     expect(updateSetting).not.toHaveBeenCalled();
   });
 
+  test('explains the tenant fee in shillings, from the live settings', async () => {
+    renderAdminScreen(<SettingsPage />);
+
+    // 50% of a 1,000,000 month, and HomeMate keeps 10% of that.
+    expect(await screen.findByText('Customer pays 50% of one month’s rent')).toBeInTheDocument();
+    expect(screen.getByText('TZS 500,000')).toBeInTheDocument();
+    expect(screen.getByText(/Saves TZS 500,000 against the usual one-month agent fee/)).toBeInTheDocument();
+    expect(screen.getByText('HomeMate keeps 10% of the fee')).toBeInTheDocument();
+    expect(screen.getByText('TZS 50,000')).toBeInTheDocument();
+    expect(screen.getByText('TZS 450,000')).toBeInTheDocument();
+  });
+
+  test('refuses a fee percentage over 100 before it reaches the server', async () => {
+    const api = createFakeAdminApi();
+    const updateSetting = vi.spyOn(api, 'updateSetting');
+    const user = userEvent.setup();
+    renderAdminScreen(<SettingsPage />, {api});
+
+    await user.click(await screen.findByRole('button', {name: /change the tenant fee/i}));
+    const form = within(await screen.findByRole('dialog'));
+    const input = form.getByLabelText(/percentage/i);
+    await user.clear(input);
+    await user.type(input, '150');
+    await user.click(form.getByRole('button', {name: /^save$/i}));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/from 0 to 100/i);
+    expect(updateSetting).not.toHaveBeenCalled();
+  });
+
   test('shows version history for a setting', async () => {
     const user = userEvent.setup();
     renderAdminScreen(<SettingsPage />);
-    await screen.findByText('Broker commission %');
+    await screen.findByText('HomeMate’s share of the tenant fee');
 
-    await user.click(within(screen.getByText('Broker commission %').closest('tr')!).getByRole('button', {name: /history/i}));
+    await user.click(within(screen.getByText('HomeMate’s share of the tenant fee').closest('tr')!).getByRole('button', {name: /history/i}));
 
     const dialog = within(await screen.findByRole('dialog'));
     expect(await dialog.findByText('admin@homemate.co.tz')).toBeInTheDocument();

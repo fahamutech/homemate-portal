@@ -11,32 +11,21 @@ import {useAdminSearch} from './searchContext';
 import {useAttention} from './attentionContext';
 
 const STATUSES = [
-  {value: 'pending', label: 'Pending'},
-  {value: 'awaiting_payment', label: 'Awaiting payment'},
-  {value: 'confirmed', label: 'Confirmed'},
-  {value: 'active', label: 'Active rental'},
-  {value: 'completed', label: 'Completed'},
-  {value: 'cancelled', label: 'Cancelled'},
-  {value: 'expired', label: 'Expired'},
+  {value: 'awaiting_payment', label: 'Paying — not yet verified'},
+  {value: 'confirmed', label: 'Paid — tenancy not started'},
+  {value: 'active', label: 'Tenancy running'},
+  {value: 'completed', label: 'Tenancy ended'},
+  {value: 'expired', label: 'Lapsed unpaid'},
 ];
 
-const NEXT: Record<string, {status: string; label: string; reason?: string; destructive?: boolean}[]> = {
-  pending: [
-    {status: 'awaiting_payment', label: 'Request payment'},
-    {status: 'cancelled', label: 'Cancel', reason: 'Why is it cancelled?', destructive: true},
-  ],
-  awaiting_payment: [
-    {status: 'confirmed', label: 'Confirm'},
-    {status: 'cancelled', label: 'Cancel', reason: 'Why is it cancelled?', destructive: true},
-  ],
-  confirmed: [
-    {status: 'active', label: 'Start tenancy'},
-    {status: 'cancelled', label: 'Cancel', reason: 'Why is it cancelled?', destructive: true},
-  ],
+/**
+ * The only moves a person makes here. There is no booking workflow: a
+ * customer's enquiry is accepted, they pay, and verifying the payment confirms
+ * the home by itself. What is left is the tenancy — starting it and ending it.
+ */
+const NEXT: Record<string, {status: string; label: string}[]> = {
+  confirmed: [{status: 'active', label: 'Start tenancy'}],
   active: [{status: 'completed', label: 'End tenancy'}],
-  completed: [],
-  cancelled: [],
-  expired: [{status: 'pending', label: 'Reopen'}],
 };
 
 function money(value: string | number | null | undefined, currency = 'TZS') {
@@ -44,20 +33,20 @@ function money(value: string | number | null | undefined, currency = 'TZS') {
 }
 
 /**
- * Bookings and active rentals.
+ * Homes customers have paid for, and the tenancies running in them.
  *
- * Confirming is what takes a property off the market, and the database refuses
- * it until the money has actually settled — so a confirm that fails here is
- * the system working, and the refusal is shown as written.
+ * A row appears here the moment a customer whose enquiry was accepted starts
+ * paying, and becomes a tenancy when Payments verifies the money — nobody
+ * confirms anything by hand on this screen.
  */
-export function BookingsPage() {
+export function RentalsPage() {
   const api = useAdminApi();
   const attention = useAttention();
   const {filters, setFilter, offset, setOffset, key, limit} = useListFilters({status: ''});
   const searchTerm = useAdminSearch('Reference, property or customer');
   const [detailId, setDetailId] = useState<string | null>(null);
   const [decision, setDecision] = useState<
-    {booking: Booking; move: {status: string; label: string; reason?: string; destructive?: boolean}} | null
+    {booking: Booking; move: {status: string; label: string}} | null
   >(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,8 +57,8 @@ export function BookingsPage() {
 
   return (
     <PageSection
-      title="Bookings & rentals"
-      description="What customers have booked, what they owe, and which tenancies are running."
+      title="Rentals"
+      description="Homes customers have paid for, what is still being verified, and which tenancies are running."
     >
       {error && <div className={fieldStyles.errorBlock} role="alert">{error}</div>}
 
@@ -93,7 +82,7 @@ export function BookingsPage() {
           error={state.status === 'error' ? state.error : undefined}
           onRetry={refresh}
           rows={state.data?.items ?? []}
-          emptyMessage="No bookings match these filters."
+          emptyMessage="No rentals match these filters."
           columns={[
             {key: 'reference', header: 'Reference', render: (b) => <code>{b.reference}</code>},
             {key: 'property', header: 'Property', render: (b) => b.property_title},
@@ -107,7 +96,8 @@ export function BookingsPage() {
                 </span>
               ),
             },
-            {key: 'due', header: 'Total due', render: (b) => money(b.total_due, b.currency)},
+            {key: 'rent', header: 'Monthly rent', render: (b) => money(b.monthly_rent, b.currency)},
+            {key: 'due', header: 'First payment', render: (b) => money(b.total_due, b.currency)},
             {
               key: 'outstanding',
               header: 'Outstanding',
@@ -131,7 +121,7 @@ export function BookingsPage() {
                   {(NEXT[booking.status] ?? []).map((move) => (
                     <Button
                       key={move.status}
-                      variant={move.destructive ? 'ghost' : 'outline'}
+                      variant="outline"
                       size="small"
                       onClick={() => setDecision({booking, move})}
                     >
@@ -156,32 +146,22 @@ export function BookingsPage() {
       {decision && (
         <ConfirmDialog
           title={`${decision.move.label} ${decision.booking.reference}?`}
-          description={
-            decision.move.status === 'confirmed'
-              ? 'This takes the property off the market. It is refused until the money has been verified.'
-              : 'The customer is notified.'
-          }
+          description="The customer is notified."
           confirmLabel={decision.move.label}
-          destructive={decision.move.destructive}
-          reasonLabel={decision.move.reason}
           error={error}
           onCancel={() => {
             setDecision(null);
             setError(null);
           }}
-          onConfirm={async (reason) => {
+          onConfirm={async () => {
             try {
-              await api.changeBookingStatus(decision.booking.id, {
-                status: decision.move.status,
-                reason,
-              });
+              await api.changeBookingStatus(decision.booking.id, {status: decision.move.status});
               setDecision(null);
               setError(null);
               refresh();
               attention.refresh();
             } catch (err) {
-              // The database's own explanation — "this booking has 0 of
-              // 2,400,000 settled" — is better than anything invented here.
+              // The server's own explanation is better than anything invented here.
               setError(err instanceof Error ? err.message : 'That change was refused');
             }
           }}
@@ -200,7 +180,7 @@ function BookingDetailModal({id, onClose}: {id: string; onClose: () => void}) {
 
   return (
     <Modal
-      title={booking ? `Booking ${booking.reference}` : 'Booking'}
+      title={booking ? `Rental ${booking.reference}` : 'Rental'}
       description={booking?.property_title}
       onClose={onClose}
       footer={<Button variant="outline" onClick={onClose}>Close</Button>}
@@ -217,7 +197,13 @@ function BookingDetailModal({id, onClose}: {id: string; onClose: () => void}) {
               {label: 'Landlord', value: booking.landlord_name ?? '—'},
               {label: 'Monthly rent', value: money(booking.monthly_rent, booking.currency)},
               {label: 'Deposit', value: money(booking.deposit_amount, booking.currency)},
-              {label: 'Total due', value: money(booking.total_due, booking.currency)},
+              {
+                label: 'HomeMate fee',
+                value: Number(booking.service_fee ?? 0) > 0
+                  ? `${money(booking.service_fee, booking.currency)} (${Number(booking.service_fee_percentage)}% of a month) · HomeMate keeps ${money(booking.platform_fee, booking.currency)}`
+                  : '—',
+              },
+              {label: 'First payment', value: money(booking.total_due, booking.currency)},
               {label: 'Paid', value: money(booking.amount_paid, booking.currency)},
               {label: 'Outstanding', value: money(booking.amount_outstanding, booking.currency)},
               {

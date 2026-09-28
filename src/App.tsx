@@ -17,8 +17,7 @@ import {SettingsPage} from './features/admin/SettingsPage';
 import {AuditPage} from './features/admin/AuditPage';
 import {PaymentsPage} from './features/admin/PaymentsPage';
 import {InquiriesPage} from './features/admin/InquiriesPage';
-import {ViewingsPage} from './features/admin/ViewingsPage';
-import {BookingsPage} from './features/admin/BookingsPage';
+import {RentalsPage} from './features/admin/RentalsPage';
 
 /** The admin console, mounted once a session exists. */
 export function AdminRoutes({token, admin, onLogout}: {token: string; admin: AdminAccount; onLogout: () => void}) {
@@ -39,8 +38,10 @@ export function AdminRoutes({token, admin, onLogout}: {token: string; admin: Adm
           <Route path="dictionaries" element={<DictionariesPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="inquiries" element={<InquiriesPage />} />
-          <Route path="viewings" element={<ViewingsPage />} />
-          <Route path="bookings" element={<BookingsPage />} />
+          <Route path="rentals" element={<RentalsPage />} />
+          {/* Old bookmarks: bookings became rentals, viewings are gone. */}
+          <Route path="bookings" element={<Navigate to="/admin/rentals" replace />} />
+          <Route path="viewings" element={<Navigate to="/admin/inquiries" replace />} />
           <Route path="payments" element={<PaymentsPage />} />
           <Route path="audit" element={<AuditPage />} />
         </Route>

@@ -88,7 +88,7 @@ export function InquiriesPage() {
                 </span>
               ),
             },
-            {key: 'status', header: 'Status', render: (i) => <StatusBadge status={i.status} />},
+            {key: 'status', header: 'Status', render: (i) => <StatusBadge status={i.display_status ?? i.status} />},
             {
               key: 'actions',
               header: 'Actions',
@@ -174,7 +174,7 @@ function ReplyModal({
     >
       <DetailGrid
         items={[
-          {label: 'Status', value: <StatusBadge status={inquiry.status} />},
+          {label: 'Status', value: <StatusBadge status={inquiry.display_status ?? inquiry.status} />},
           {label: 'Customer', value: inquiry.customer_name ?? '—'},
           {label: 'Phone', value: inquiry.customer_phone ?? '—'},
           {label: 'Property', value: `${inquiry.property_reference} · ${inquiry.property_title}`},
@@ -201,7 +201,7 @@ function ReplyModal({
             id="inquiry-outcome"
             options={[
               {value: 'responded', label: 'Reply to the customer'},
-              {value: 'accepted', label: 'Accept — invite them to book'},
+              {value: 'accepted', label: 'Accept — the customer can now pay to secure it'},
               {value: 'rejected', label: 'Decline'},
               {value: 'closed', label: 'Close without a reply'},
             ]}

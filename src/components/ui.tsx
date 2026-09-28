@@ -41,6 +41,11 @@ const STATUS_TONE: Record<string, string> = {
   deactivated: styles.badgeNeutral,
   suspended: styles.badgeDanger,
   rejected: styles.badgeDanger,
+  verified: styles.badgeSuccess,
+  confirmed: styles.badgeSuccess,
+  awaiting_payment: styles.badgeWarning,
+  awaiting_verification: styles.badgeWarning,
+  paid: styles.badgeSuccess,
 };
 
 export function humanise(value: string | null | undefined) {

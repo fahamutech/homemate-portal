@@ -4,7 +4,7 @@ import type {
   BookingDetail, DeclaredPayment, Inquiry,
   OutstandingBalance, Page, PaymentAwaitingInstructions, PaymentDetail, PaymentInstructions,
   PaymentMethod, PaymentSplit, Payout, PayoutDetail, PlatformSetting, PropertyCharge,
-  PropertyMedia, PropertyParty, SmsActivity, SmsBalance, Viewing,
+  PropertyMedia, PropertyParty, SmsActivity, SmsBalance, CommissionRow,
 } from './adminApi';
 import {AdminApiError} from './adminApi';
 
@@ -69,7 +69,8 @@ const FAKE_PAYMENT_METHODS: PaymentMethod[] = [
 
 const FAKE_SETTINGS: PlatformSetting[] = [
   {key: 'platform.name', value: 'HomeMate Africa', category: 'general', description: 'Display name', updated_by: null, updated_at: '2026-09-01T00:00:00Z'},
-  {key: 'commission.broker_percentage', value: 5, category: 'commission', description: 'Broker commission %', updated_by: null, updated_at: '2026-09-01T00:00:00Z'},
+  {key: 'commission.tenant_fee_percentage', value: 50, category: 'commission', description: 'Tenant fee, as a percentage of one month’s rent', updated_by: null, updated_at: '2026-09-01T00:00:00Z'},
+  {key: 'commission.platform_percentage', value: 10, category: 'commission', description: 'HomeMate’s share of the tenant fee', updated_by: null, updated_at: '2026-09-01T00:00:00Z'},
 ];
 
 const FAKE_ACTIVITY: AuditEntry[] = [
@@ -118,20 +119,25 @@ export function createFakeAdminApi(overrides: Partial<AdminApi> = {}): AdminApi 
       has_viewing: false, has_booking: false,
     },
   ];
-  const viewings: Viewing[] = [
+  const bookings: BookingDetail[] = [];
+  const commissions: CommissionRow[] = [
     {
-      id: 'vw-1', reference: 'HM-VW-000001', status: 'requested',
-      scheduled_for: '2026-09-25T10:00:00Z', duration_minutes: 30,
-      meeting_point: 'Main gate', customer_note: null, host_note: null,
-      cancellation_reason: null, confirmed_at: null, created_at: '2026-09-18T09:10:00Z',
-      property_id: 'prop-1', property_reference: 'HM-P-000001',
-      property_title: 'Masaki 3BR Apartment', property_address: 'Masaki, Dar es Salaam',
-      cover_media_id: null, customer_id: 'user-2', customer_name: 'Juma Customer',
-      customer_phone: '+255712000002', host_name: 'Amina Hassan',
-      host_phone: '+255712000001', is_upcoming: true,
+      id: 'bk-1', reference: 'HM-BK-000001', status: 'confirmed', created_at: '2026-09-18T09:00:00Z',
+      property_id: 'prop-1', property_reference: 'HM-P-000001', property_title: 'Masaki 3BR Apartment',
+      customer_name: 'Juma Customer', monthly_rent: '1500000', currency: 'TZS',
+      service_fee: '750000', service_fee_percentage: '50.00', platform_fee_percentage: '10.00',
+      platform_fee: '75000', agent_fee: '675000', settled: true,
+      agent_type: 'broker', agent_name: 'Asha Broker',
+    },
+    {
+      id: 'bk-2', reference: 'HM-BK-000002', status: 'awaiting_payment', created_at: '2026-09-20T09:00:00Z',
+      property_id: 'prop-1', property_reference: 'HM-P-000001', property_title: 'Masaki 3BR Apartment',
+      customer_name: 'Neema Customer', monthly_rent: '800000', currency: 'TZS',
+      service_fee: '400000', service_fee_percentage: '50.00', platform_fee_percentage: '10.00',
+      platform_fee: '40000', agent_fee: '360000', settled: false,
+      agent_type: null, agent_name: null,
     },
   ];
-  const bookings: BookingDetail[] = [];
   const paymentInstructions = new Map<string, PaymentInstructions>();
 
   const kycDocuments: (KycDocument & {user_id: string})[] = [];
@@ -652,8 +658,6 @@ export function createFakeAdminApi(overrides: Partial<AdminApi> = {}): AdminApi 
         openRemediations: remediations.filter((r) => !r.resolved).length,
         beneficiariesOwed: new Set(unpaidSplits().map((s) => s.beneficiary_user_id)).size,
         inquiriesPending: inquiries.filter((i) => i.status === 'pending').length,
-        viewingsRequested: viewings.filter((v) => v.status === 'requested').length,
-        bookingsPending: bookings.filter((b) => ['pending', 'awaiting_payment'].includes(b.status)).length,
         paymentsDeclared: payments.filter(
           (p) => p.status === 'pending' && p.customer_declared_paid_at != null
         ).length,
@@ -672,8 +676,6 @@ export function createFakeAdminApi(overrides: Partial<AdminApi> = {}): AdminApi 
             counts.paymentsPending + counts.paymentsFailed + counts.payoutsDue +
             counts.payoutsBlocked + counts.paymentsDeclared + counts.paymentsNeedingInstructions,
           inquiries: counts.inquiriesPending,
-          viewings: counts.viewingsRequested,
-          bookings: counts.bookingsPending,
         },
       };
     },
@@ -998,23 +1000,13 @@ export function createFakeAdminApi(overrides: Partial<AdminApi> = {}): AdminApi 
           400
         );
       }
-      const broker = parties.find((party) => party.role === 'broker');
-      const platformShare = Math.round(amount * 0.1 * 100) / 100;
-      const brokerShare = broker?.commission_percentage
-        ? Math.round((amount * Number(broker.commission_percentage)) / 100 * 100) / 100
-        : 0;
-      const splits: PaymentSplit[] = [
-        {id: `split-${++sequence}`, beneficiary_type: 'platform', beneficiary_user_id: null, beneficiary_name: 'HomeMate', amount: String(platformShare), percentage: '10.00', payout_id: null, payout_reference: null, payout_status: null},
-      ];
-      if (brokerShare > 0 && broker) {
-        splits.push({id: `split-${++sequence}`, beneficiary_type: 'broker', beneficiary_user_id: broker.user_id, beneficiary_name: broker.full_name, amount: String(brokerShare), percentage: broker.commission_percentage, payout_id: null, payout_reference: null, payout_status: null});
-      }
-      splits.push({
+      // Rent recorded by hand is the landlord's whole: commission comes only
+      // from the tenant fee, which is split at checkout.
+      const splits: PaymentSplit[] = [{
         id: `split-${++sequence}`, beneficiary_type: 'landlord', beneficiary_user_id: landlordId,
         beneficiary_name: users.find((u) => u.id === landlordId)?.full_name ?? null,
-        amount: String(Math.round((amount - platformShare - brokerShare) * 100) / 100),
-        percentage: null, payout_id: null, payout_reference: null, payout_status: null,
-      });
+        amount: String(amount), percentage: null, payout_id: null, payout_reference: null, payout_status: null,
+      }];
 
       const payment: PaymentDetail = {
         id: `pay-${++sequence}`,
@@ -1314,28 +1306,6 @@ export function createFakeAdminApi(overrides: Partial<AdminApi> = {}): AdminApi 
       return inquiry;
     },
 
-    async listViewings(params = {}) {
-      const filtered = viewings.filter((v) => (params.status ? v.status === params.status : true));
-      return page(filtered, Number(params.limit ?? 20), Number(params.offset ?? 0));
-    },
-
-    async changeViewingStatus(id, body) {
-      const viewing = viewings.find((v) => v.id === id);
-      if (!viewing) throw new AdminApiError('NOT_FOUND', 'Viewing not found', 404);
-      if (body.status === 'cancelled' && !body.reason) {
-        throw new AdminApiError(
-          'VALIDATION_FAILED',
-          'Tell the customer why the viewing was cancelled',
-          400
-        );
-      }
-      viewing.status = body.status as string;
-      viewing.cancellation_reason = body.status === 'cancelled' ? (body.reason as string) : null;
-      if (body.status === 'confirmed') viewing.confirmed_at = new Date().toISOString();
-      if (body.meetingPoint) viewing.meeting_point = body.meetingPoint as string;
-      return viewing;
-    },
-
     async listBookings(params = {}) {
       const filtered = bookings.filter((b) => (params.status ? b.status === params.status : true));
       return page(filtered, Number(params.limit ?? 20), Number(params.offset ?? 0));
@@ -1350,13 +1320,13 @@ export function createFakeAdminApi(overrides: Partial<AdminApi> = {}): AdminApi 
     async changeBookingStatus(id, body) {
       const booking = bookings.find((b) => b.id === id);
       if (!booking) throw new AdminApiError('NOT_FOUND', 'Booking not found', 404);
-      // The database refuses this until the money has settled, so the fake
-      // must too — otherwise the screen is never tested against the refusal.
-      if (body.status === 'confirmed' && Number(booking.amount_paid) < Number(booking.total_due)) {
+      // Only the tenancy is moved by hand now; the server refuses the rest,
+      // so the fake must too.
+      if (!['active', 'completed'].includes(body.status as string)) {
         throw new AdminApiError(
           'VALIDATION_FAILED',
-          `This booking has ${booking.amount_paid} of ${booking.total_due} settled, so it cannot be confirmed yet`,
-          422
+          'Only starting or ending a tenancy is done by hand. A reservation is confirmed when its payment is verified.',
+          400
         );
       }
       booking.status = body.status as string;
@@ -1472,6 +1442,24 @@ export function createFakeAdminApi(overrides: Partial<AdminApi> = {}): AdminApi 
             last_seen: '2026-09-18T09:40:00Z',
           },
         ],
+      };
+    },
+
+    async listCommissions(params = {}) {
+      const filtered = commissions.filter((row) =>
+        params.settled === undefined || params.settled === '' ? true : String(row.settled) === String(params.settled)
+      );
+      const sum = (key: 'service_fee' | 'platform_fee' | 'agent_fee', rows = commissions) =>
+        String(rows.reduce((total, row) => total + Number(row[key]), 0));
+      return {
+        ...page(filtered, Number(params.limit ?? 20), Number(params.offset ?? 0)),
+        totals: {
+          fees: sum('service_fee'),
+          platform: sum('platform_fee'),
+          agents: sum('agent_fee'),
+          platform_settled: sum('platform_fee', commissions.filter((row) => row.settled)),
+          placements: String(commissions.length),
+        },
       };
     },
 

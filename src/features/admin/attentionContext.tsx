@@ -12,8 +12,6 @@ const EMPTY: AttentionSnapshot = {
     staff: 0,
     payments: 0,
     inquiries: 0,
-    viewings: 0,
-    bookings: 0,
   },
 };
 

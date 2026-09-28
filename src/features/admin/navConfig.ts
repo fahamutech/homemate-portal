@@ -1,6 +1,6 @@
 export type AdminAclKey =
   | 'dashboard' | 'users' | 'staff' | 'properties' | 'agencies' | 'inquiries'
-  | 'viewings' | 'bookings' | 'payments' | 'dictionaries' | 'settings' | 'audit';
+  | 'bookings' | 'payments' | 'dictionaries' | 'settings' | 'audit';
 
 export interface AdminNavItem {
   path: string;
@@ -9,7 +9,7 @@ export interface AdminNavItem {
   subtitle: string;
   icon: 'dashboard' | 'users' | 'staff' | 'properties' | 'brokers' | 'payments' | 'reports' | 'settings' | 'content';
   /** Which counter from /admin/attention this entry shows, if any. */
-  badge?: 'properties' | 'agencies' | 'users' | 'staff' | 'payments' | 'inquiries' | 'viewings' | 'bookings';
+  badge?: 'properties' | 'agencies' | 'users' | 'staff' | 'payments' | 'inquiries';
   /**
    * The staff ACL key this section needs (matches homemate-functions'
    * shared/admin-acl.mjs). 'dashboard' is always granted to every signed-in
@@ -26,8 +26,7 @@ export const STAFF_ACL_OPTIONS: {value: AdminAclKey; label: string}[] = [
   {value: 'properties', label: 'Properties'},
   {value: 'agencies', label: 'Agencies'},
   {value: 'inquiries', label: 'Enquiries'},
-  {value: 'viewings', label: 'Viewings'},
-  {value: 'bookings', label: 'Bookings'},
+  {value: 'bookings', label: 'Rentals'},
   {value: 'payments', label: 'Payments'},
   {value: 'dictionaries', label: 'Dictionaries'},
   {value: 'settings', label: 'Settings'},
@@ -94,28 +93,19 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     aclKey: 'inquiries',
   },
   {
-    path: '/admin/viewings',
-    label: 'Viewings',
-    title: 'Property Viewings',
-    subtitle: 'Appointments customers have asked for',
-    icon: 'reports',
-    badge: 'viewings',
-    aclKey: 'viewings',
-  },
-  {
-    path: '/admin/bookings',
-    label: 'Bookings',
-    title: 'Bookings & Rentals',
-    subtitle: 'What is booked, what is owed, and which tenancies are running',
+    path: '/admin/rentals',
+    label: 'Rentals',
+    title: 'Rentals',
+    subtitle: 'Homes customers have paid for, and the tenancies running in them',
     icon: 'brokers',
-    badge: 'bookings',
+    // The API behind this screen is still /admin/bookings, and so is the key.
     aclKey: 'bookings',
   },
   {
     path: '/admin/payments',
     label: 'Payments',
     title: 'Payments & Settlements',
-    subtitle: 'Rent collected, split between partners, and disbursed to them',
+    subtitle: 'Payments verified, the HomeMate fee split into commissions, and partners paid out',
     icon: 'payments',
     badge: 'payments',
     aclKey: 'payments',
