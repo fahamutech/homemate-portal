@@ -64,3 +64,13 @@ export function listedBySentence(listedBy: ListedBy | undefined) {
   if (!listedBy || listedBy.kind === 'backoffice') return 'Listed from the backoffice';
   return `Listed by ${listedBy.name ?? 'a partner'} (${listedBy.kind})`;
 }
+
+/**
+ * The Landlord column on Properties. `not_required` means the listing has no
+ * landlord to ask: fine for a landlord's own or a backoffice listing, but on a
+ * broker's listing it means the landlord has not been attached yet.
+ */
+export function landlordColumnLabel(listedBy: ListedBy | undefined, status: LandlordConfirmationStatus) {
+  if (status === 'not_required' && listedBy?.kind === 'broker') return 'No landlord yet';
+  return CONFIRMATION_LABEL[status];
+}

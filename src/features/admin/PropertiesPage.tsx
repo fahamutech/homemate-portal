@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import type {FormEvent} from 'react';
 import {useAdminApi} from '../../api/AdminApiContext';
-import {CONFIRMATION_LABEL} from './partners/labels';
+import {landlordColumnLabel} from './partners/labels';
 import {ListedByCell} from './partners/ListedBy';
 import type {AdminProperty} from '../../api/adminApi';
 import {useResource} from '../../hooks/useResource';
@@ -182,7 +182,7 @@ export function PropertiesPage() {
                 if (!confirmation) return '—';
                 return (
                   <span title={confirmation.reason ?? undefined}>
-                    <StatusBadge status={confirmation.status} label={CONFIRMATION_LABEL[confirmation.status]} />
+                    <StatusBadge status={confirmation.status} label={landlordColumnLabel(p.listed_by, confirmation.status)} />
                   </span>
                 );
               },
