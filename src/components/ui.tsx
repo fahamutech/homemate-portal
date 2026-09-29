@@ -46,6 +46,13 @@ const STATUS_TONE: Record<string, string> = {
   awaiting_payment: styles.badgeWarning,
   awaiting_verification: styles.badgeWarning,
   paid: styles.badgeSuccess,
+  // partner roles (T01/T03) and landlord confirmation (T04)
+  in_review: styles.badgeWarning,
+  applied: styles.badgeNeutral,
+  invited: styles.badgeNeutral,
+  action_needed: styles.badgeWarning,
+  disputed: styles.badgeDanger,
+  not_required: styles.badgeNeutral,
 };
 
 export function humanise(value: string | null | undefined) {
@@ -53,9 +60,12 @@ export function humanise(value: string | null | undefined) {
   return value.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export function StatusBadge({status}: {status: string | null}) {
+/** A status pill, toned by its value; `label` overrides the humanised text. */
+export function StatusBadge({status, label}: {status: string | null; label?: string}) {
   if (!status) return <span>—</span>;
-  return <span className={`${styles.badge} ${STATUS_TONE[status] ?? styles.badgeNeutral}`}>{humanise(status)}</span>;
+  return (
+    <span className={`${styles.badge} ${STATUS_TONE[status] ?? styles.badgeNeutral}`}>{label ?? humanise(status)}</span>
+  );
 }
 
 /* --- Fields ---------------------------------------------------------------- */

@@ -2,6 +2,7 @@ import {useNavigate} from 'react-router-dom';
 import {useAdminApi} from '../../api/AdminApiContext';
 import {SmsCreditCard} from './SmsCreditCard';
 import {useResource} from '../../hooks/useResource';
+import {useAttention} from './attentionContext';
 import {DataTable, PageSection, StatusBadge, humanise, fieldStyles} from '../../components/ui';
 import type {AuditEntry} from '../../api/adminApi';
 import usersIcon from '../../assets/icons/users.svg';
@@ -21,6 +22,7 @@ export function DashboardPage() {
   const api = useAdminApi();
   const navigate = useNavigate();
   const {state, refresh} = useResource(() => api.dashboard(), 'dashboard');
+  const attention = useAttention();
 
   if (state.status === 'error') {
     return (
@@ -136,6 +138,20 @@ export function DashboardPage() {
             <div className={styles.actionText}>
               <p>Approve agencies</p>
               <p>{kpis ? `${kpis.pendingOrganizations} applications pending` : 'Loading…'}</p>
+            </div>
+          </button>
+          <button
+            type="button"
+            className={`${styles.actionButton} ${styles.actionButtonDark}`}
+            onClick={() => navigate('/admin/partners?status=pending_review')}
+          >
+            <img src={userCheckIcon} alt="" width={20} height={20} />
+            <div className={styles.actionText}>
+              <p>Review brokers and landlords</p>
+              <p>
+                <span data-testid="partner-applications-waiting">{attention.badges.partners ?? 0}</span> partner
+                applications waiting
+              </p>
             </div>
           </button>
         </div>

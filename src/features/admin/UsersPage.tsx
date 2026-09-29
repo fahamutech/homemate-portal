@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import type {FormEvent} from 'react';
 import {useAdminApi} from '../../api/AdminApiContext';
+import {RoleChips} from './partners/RoleChips';
 import type {AdminUser} from '../../api/adminApi';
 import {useResource} from '../../hooks/useResource';
 import {useListFilters} from '../../hooks/useListFilters';
@@ -139,7 +140,10 @@ export function UsersPage({staffOnly}: {staffOnly: boolean}) {
               header: staffOnly ? 'Email' : 'Phone',
               render: (user) => (staffOnly ? user.email : user.phone_number) ?? '—',
             },
-            {key: 'role', header: 'Role', render: (user) => humanise(user.role)},
+            // Staff have one role; everyone else holds roles (T01) with their own status.
+            staffOnly
+              ? {key: 'role', header: 'Role', render: (user: AdminUser) => humanise(user.role)}
+              : {key: 'role', header: 'Roles', render: (user: AdminUser) => <RoleChips roles={user.roles} />},
             ...(staffOnly
               ? [{key: 'job', header: 'Job title', render: (user: AdminUser) => user.job_title ?? '—'}]
               : [{key: 'org', header: 'Organization', render: (user: AdminUser) => user.organization_name ?? '—'}]),

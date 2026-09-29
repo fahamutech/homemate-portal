@@ -10,6 +10,7 @@ import {createHttpAdminApi} from './api/adminApi';
 import {AdminLayout} from './features/admin/AdminLayout';
 import {DashboardPage} from './features/admin/DashboardPage';
 import {UsersPage} from './features/admin/UsersPage';
+import {PartnersPage} from './features/admin/PartnersPage';
 import {AgenciesPage} from './features/admin/AgenciesPage';
 import {PropertiesPage} from './features/admin/PropertiesPage';
 import {DictionariesPage} from './features/admin/DictionariesPage';
@@ -34,6 +35,7 @@ export function AdminRoutes({token, admin, onLogout}: {token: string; admin: Adm
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="users" element={<UsersPage staffOnly={false} />} />
           <Route path="staff" element={<UsersPage staffOnly />} />
+          <Route path="partners" element={<PartnersPage />} />
           <Route path="properties" element={<PropertiesPage />} />
           <Route path="agencies" element={<AgenciesPage />} />
           <Route path="dictionaries" element={<DictionariesPage />} />

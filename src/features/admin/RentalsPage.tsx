@@ -232,6 +232,23 @@ function BookingDetailModal({id, onClose}: {id: string; onClose: () => void}) {
               ))}
             </>
           )}
+
+          {(booking.history?.length ?? 0) > 0 && (
+            <>
+              <p className={fieldStyles.sectionTitle} id={`booking-history-${booking.id}`}>History</p>
+              <ul aria-labelledby={`booking-history-${booking.id}`} className={fieldStyles.plainList}>
+                {booking.history!.map((entry) => (
+                  <li key={`${entry.status}-${entry.at}`} className={fieldStyles.listRow}>
+                    <span>{entry.label}</span>
+                    <span>
+                      {new Date(entry.at).toLocaleString()}
+                      {!entry.by_landlord && entry.actor ? ` · ${entry.actor}` : ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </>
       )}
     </Modal>

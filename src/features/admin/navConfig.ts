@@ -1,6 +1,6 @@
 export type AdminAclKey =
   | 'dashboard' | 'users' | 'staff' | 'properties' | 'agencies' | 'inquiries'
-  | 'bookings' | 'payments' | 'dictionaries' | 'settings' | 'audit';
+  | 'bookings' | 'payments' | 'dictionaries' | 'settings' | 'audit' | 'partners';
 
 export interface AdminNavItem {
   path: string;
@@ -9,7 +9,7 @@ export interface AdminNavItem {
   subtitle: string;
   icon: 'dashboard' | 'users' | 'staff' | 'properties' | 'brokers' | 'payments' | 'reports' | 'settings' | 'content';
   /** Which counter from /admin/attention this entry shows, if any. */
-  badge?: 'properties' | 'agencies' | 'users' | 'staff' | 'payments' | 'inquiries';
+  badge?: 'properties' | 'agencies' | 'users' | 'staff' | 'payments' | 'inquiries' | 'partners';
   /**
    * The staff ACL key this section needs (matches homemate-functions'
    * shared/admin-acl.mjs). 'dashboard' is always granted to every signed-in
@@ -23,6 +23,7 @@ export interface AdminNavItem {
 export const STAFF_ACL_OPTIONS: {value: AdminAclKey; label: string}[] = [
   {value: 'users', label: 'Users'},
   {value: 'staff', label: 'Staff'},
+  {value: 'partners', label: 'Partners'},
   {value: 'properties', label: 'Properties'},
   {value: 'agencies', label: 'Agencies'},
   {value: 'inquiries', label: 'Enquiries'},
@@ -64,6 +65,16 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     icon: 'staff',
     badge: 'staff',
     aclKey: 'staff',
+  },
+  {
+    path: '/admin/partners',
+    label: 'Partners',
+    title: 'Partner applications',
+    subtitle: 'Verify the people who apply to be brokers and landlords',
+    icon: 'staff',
+    badge: 'partners',
+    // matches ['/admin/partner-applications', ['partners']] in admin-acl.mjs
+    aclKey: 'partners',
   },
   {
     path: '/admin/properties',

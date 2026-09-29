@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import {useAdminApi} from '../../api/AdminApiContext';
+import {CONFIRMATION_LABEL, listedBySentence} from './partners/labels';
 import type {AdminPropertyDetail} from '../../api/adminApi';
 import {useResource} from '../../hooks/useResource';
 import {AuthedImage} from './AuthedImage';
@@ -169,6 +170,17 @@ export function PropertyDetailModal({id, onClose}: {id: string; onClose: () => v
 
           {tab === 'People' && (
             <>
+              <p className={fieldStyles.hint}>
+                {listedBySentence(property.listed_by)}
+                {property.landlord_confirmation && property.landlord_confirmation.status !== 'not_required' && (
+                  <>
+                    {' · '}
+                    {property.landlord_confirmation.status === 'disputed'
+                      ? `Landlord disputed: ${property.landlord_confirmation.reason ?? 'no reason given'}`
+                      : `Landlord confirmation: ${CONFIRMATION_LABEL[property.landlord_confirmation.status]}`}
+                  </>
+                )}
+              </p>
               {property.parties.length === 0 ? (
                 <p className={fieldStyles.stateBlock}>Nobody is attributed to this property yet.</p>
               ) : (
@@ -180,7 +192,12 @@ export function PropertyDetailModal({id, onClose}: {id: string; onClose: () => v
                     {property.parties.map((party) => (
                       <tr key={party.id}>
                         <td data-label="Role">{humanise(party.role)}{party.is_primary ? ' · primary' : ''}</td>
-                        <td data-label="Name">{party.full_name ?? '—'}</td>
+                        <td data-label="Name">
+                          {party.full_name ?? '—'}
+                          {party.role === 'landlord' && party.confirmation_status && party.confirmation_status !== 'not_required' && (
+                            <> <StatusBadge status={party.confirmation_status} label={CONFIRMATION_LABEL[party.confirmation_status]} /></>
+                          )}
+                        </td>
                         <td data-label="Contact">{party.phone_number ?? party.email ?? '—'}</td>
                         <td data-label="Commission">
                           {party.commission_percentage ? `${party.commission_percentage}%` : '—'}

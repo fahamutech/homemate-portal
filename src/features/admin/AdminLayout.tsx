@@ -81,7 +81,7 @@ export function AdminLayout({admin, onLogout}: AdminLayoutProps) {
 
           <nav className={styles.navList} aria-label="Admin sections">
             {navItems.map((item) => {
-              const waiting = item.badge ? attention.badges[item.badge] : 0;
+              const waiting = item.badge ? (attention.badges[item.badge] ?? 0) : 0;
               return (
                 <NavLink
                   key={item.path}
