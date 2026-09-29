@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {useAdminApi} from '../../api/AdminApiContext';
-import {CONFIRMATION_LABEL, listedBySentence} from './partners/labels';
+import {CONFIRMATION_LABEL, landlordColumnLabel, listedBySentence} from './partners/labels';
 import type {AdminPropertyDetail} from '../../api/adminApi';
 import {useResource} from '../../hooks/useResource';
 import {AuthedImage} from './AuthedImage';
@@ -172,12 +172,15 @@ export function PropertyDetailModal({id, onClose}: {id: string; onClose: () => v
             <>
               <p className={fieldStyles.hint}>
                 {listedBySentence(property.listed_by)}
-                {property.landlord_confirmation && property.landlord_confirmation.status !== 'not_required' && (
+                {property.landlord_confirmation &&
+                  (property.landlord_confirmation.status !== 'not_required' || property.listed_by?.kind === 'broker') && (
                   <>
                     {' · '}
                     {property.landlord_confirmation.status === 'disputed'
                       ? `Landlord disputed: ${property.landlord_confirmation.reason ?? 'no reason given'}`
-                      : `Landlord confirmation: ${CONFIRMATION_LABEL[property.landlord_confirmation.status]}`}
+                      : property.landlord_confirmation.status === 'not_required'
+                        ? landlordColumnLabel(property.listed_by, 'not_required')
+                        : `Landlord confirmation: ${CONFIRMATION_LABEL[property.landlord_confirmation.status]}`}
                   </>
                 )}
               </p>
