@@ -1,16 +1,17 @@
 import {useState} from 'react';
 import type {FormEvent} from 'react';
 import {useAdminApi} from '../../api/AdminApiContext';
-import type {KycDocument, KycProfile} from '../../api/adminApi';
+import type {KycDocument, KycProfile, PartnerRole, UserRole} from '../../api/adminApi';
+import {ROLE_LABEL, ROLE_STATUS_LABEL} from './partners/labels';
 import {useResource} from '../../hooks/useResource';
 import {prepareImages} from './imagePipeline';
 import {AuthedImage} from './AuthedImage';
 import {
-  Button, DetailGrid, Field, Modal, Select, StatusBadge, TextArea, TextInput, humanise, fieldStyles,
+  Button, ConfirmDialog, DetailGrid, Field, Modal, Select, StatusBadge, TextArea, TextInput, humanise, fieldStyles,
 } from '../../components/ui';
 import styles from './UserDetailModal.module.css';
 
-const TABS = ['Account', 'Identity', 'Documents', 'Remediation'] as const;
+const TABS = ['Account', 'Roles', 'Identity', 'Documents', 'Remediation'] as const;
 type Tab = (typeof TABS)[number];
 
 const DOCUMENT_TYPES = [
@@ -131,6 +132,7 @@ export function UserDetailModal({
           </nav>
 
           {tab === 'Account' && <AccountTab profile={profile} />}
+          {tab === 'Roles' && <RolesTab profile={profile} onChanged={reload} />}
           {tab === 'Identity' && <IdentityTab profile={profile} onSaved={reload} />}
           {tab === 'Documents' && <DocumentsTab profile={profile} onChanged={reload} />}
           {tab === 'Remediation' && <RemediationTab profile={profile} onChanged={reload} />}
@@ -159,6 +161,86 @@ function AccountTab({profile}: {profile: KycProfile}) {
         },
       ]}
     />
+  );
+}
+
+/**
+ * A person's roles (T01): customer, broker, landlord, each with its own
+ * status. Staff can pause a partner role (with a reason the person is shown)
+ * and restore it; applying and approving happen in the Partners queue.
+ */
+function RolesTab({profile, onChanged}: {profile: KycProfile; onChanged: () => void}) {
+  const api = useAdminApi();
+  const [changing, setChanging] = useState<{role: PartnerRole; to: 'active' | 'suspended'} | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const roles: UserRole[] = profile.roles ?? [];
+
+  async function confirm(reason: string) {
+    if (!changing) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.changeUserRoleStatus(
+        profile.id,
+        changing.role,
+        changing.to === 'suspended' ? {status: 'suspended', reason} : {status: 'active'}
+      );
+      setChanging(null);
+      onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not change that role');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (roles.length === 0) return <p className={styles.muted}>Staff accounts hold no customer or partner roles.</p>;
+
+  return (
+    <div className={fieldStyles.modalBody}>
+      {roles.map((r) => (
+        <div key={r.role} className={fieldStyles.listRow} data-testid={`role-${r.role}`}>
+          <span className={fieldStyles.inlineStack}>
+            <strong>{ROLE_LABEL[r.role]}</strong>
+            <StatusBadge status={r.status} label={ROLE_STATUS_LABEL[r.status]} />
+            <span className={styles.muted}>
+              {r.activatedAt ? `active since ${new Date(r.activatedAt).toLocaleDateString()}` : ''}
+              {r.rejectionReason ? ` · rejected: ${r.rejectionReason}` : ''}
+            </span>
+          </span>
+          {r.role !== 'customer' && r.status === 'active' && (
+            <Button size="small" variant="outline" onClick={() => setChanging({role: r.role as PartnerRole, to: 'suspended'})}>
+              Suspend
+            </Button>
+          )}
+          {r.role !== 'customer' && r.status === 'suspended' && (
+            <Button size="small" onClick={() => setChanging({role: r.role as PartnerRole, to: 'active'})}>
+              Reactivate
+            </Button>
+          )}
+        </div>
+      ))}
+
+      {changing && (
+        <ConfirmDialog
+          title={`${changing.to === 'suspended' ? 'Suspend' : 'Reactivate'} ${ROLE_LABEL[changing.role].toLowerCase()} role?`}
+          description={
+            changing.to === 'suspended'
+              ? 'Their workspace stops working at once. They are told why.'
+              : 'Their workspace works again straight away.'
+          }
+          confirmLabel={changing.to === 'suspended' ? 'Suspend' : 'Reactivate'}
+          destructive={changing.to === 'suspended'}
+          reasonLabel={changing.to === 'suspended' ? 'Reason' : undefined}
+          reasonRequired={changing.to === 'suspended'}
+          busy={busy}
+          error={error}
+          onConfirm={confirm}
+          onCancel={() => setChanging(null)}
+        />
+      )}
+    </div>
   );
 }
 

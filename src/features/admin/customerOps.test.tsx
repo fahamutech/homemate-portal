@@ -267,4 +267,40 @@ describe('rentals', () => {
     const dialog = within(await screen.findByRole('dialog'));
     expect(await dialog.findByText(/TZS 400,000 \(50% of a month\) · HomeMate keeps TZS 40,000/)).toBeInTheDocument();
   });
+
+  test('the history says when the landlord, not staff, made a move', async () => {
+    const api = apiWith('completed');
+    vi.spyOn(api, 'getBooking').mockResolvedValue({
+      ...rental('completed'),
+      payments: [],
+      history: [
+        {status: 'active', at: '2026-11-01T08:00:00Z', actor: 'user-1', by_landlord: true, label: 'Confirmed by landlord'},
+        {status: 'completed', at: '2027-11-01T08:00:00Z', actor: 'admin@homemate.co.tz', by_landlord: false, label: 'Ended'},
+      ],
+    });
+    const user = userEvent.setup();
+    renderAdminScreen(<RentalsPage />, {api});
+
+    const row = within((await screen.findByText('HM-BK-completed')).closest('tr')!);
+    await user.click(row.getByRole('button', {name: /view/i}));
+    const dialog = within(await screen.findByRole('dialog'));
+    const history = within(await dialog.findByRole('list', {name: /history/i}));
+    const items = history.getAllByRole('listitem').map((li) => li.textContent);
+    expect(items[0]).toMatch(/Confirmed by landlord/);
+    expect(items[1]).toMatch(/Ended/);
+    expect(items[1]).toMatch(/admin@homemate\.co\.tz/);
+  });
+
+  test('a rental with no recorded moves shows no history section', async () => {
+    const api = apiWith('confirmed');
+    vi.spyOn(api, 'getBooking').mockResolvedValue({...rental('confirmed'), payments: [], history: []});
+    const user = userEvent.setup();
+    renderAdminScreen(<RentalsPage />, {api});
+
+    const row = within((await screen.findByText('HM-BK-confirmed')).closest('tr')!);
+    await user.click(row.getByRole('button', {name: /view/i}));
+    const dialog = within(await screen.findByRole('dialog'));
+    await dialog.findByText(/HomeMate keeps/);
+    expect(dialog.queryByRole('list', {name: /history/i})).not.toBeInTheDocument();
+  });
 });

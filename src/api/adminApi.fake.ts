@@ -5,6 +5,7 @@ import type {
   OutstandingBalance, Page, PaymentAwaitingInstructions, PaymentDetail, PaymentInstructions,
   PaymentMethod, PaymentSplit, Payout, PayoutDetail, PlatformSetting, PropertyCharge,
   PropertyMedia, PropertyParty, SmsActivity, SmsBalance, CommissionRow,
+  PartnerApplication, PartnerRole, UserRole,
 } from './adminApi';
 import {AdminApiError} from './adminApi';
 
@@ -13,16 +14,77 @@ function page<T>(items: T[], limit = 20, offset = 0): Page<T> {
   return {items: slice, pagination: {total: items.length, limit, offset, hasMore: offset + slice.length < items.length}};
 }
 
+function role(name: UserRole['role'], status: UserRole['status'], extra: Partial<UserRole> = {}): UserRole {
+  return {
+    role: name, status, appliedAt: null, submittedAt: null,
+    activatedAt: status === 'active' ? '2026-09-10T10:00:00Z' : null, reviewedAt: null, rejectionReason: null,
+    ...extra,
+  };
+}
+
+const STEP_NAMES = {broker: ['details', 'identity', 'payout', 'agreement'], landlord: ['details', 'identity', 'ownership', 'payout', 'agreement']} as const;
+
+function application(
+  userId: string,
+  partnerRole: PartnerRole,
+  status: PartnerApplication['status'],
+  person: Partial<PartnerApplication['person']> & {fullName: string; phoneNumber: string},
+  missing: string[] = []
+): PartnerApplication {
+  const steps = STEP_NAMES[partnerRole].map((step) => ({step, complete: !missing.includes(step)}));
+  return {
+    userId,
+    role: partnerRole,
+    status,
+    person: {
+      email: null, kycStatus: 'in_review', dateOfBirth: '1990-04-12', nationalIdNumber: '19900412-12345-00001-23',
+      tinNumber: null, physicalAddress: 'Mikocheni, Dar es Salaam', payoutMethod: 'mobile_money', ...person,
+    },
+    documents: [
+      {id: `${userId}-id`, document_type: 'national_id', status: 'pending', rejection_reason: null, created_at: '2026-09-20T10:00:00Z', reviewed_at: null, has_thumbnail: true},
+      {id: `${userId}-selfie`, document_type: 'selfie', status: 'pending', rejection_reason: null, created_at: '2026-09-20T10:01:00Z', reviewed_at: null, has_thumbnail: true},
+      ...(partnerRole === 'landlord'
+        ? [{id: `${userId}-deed`, document_type: 'title_deed', status: 'pending' as const, rejection_reason: null, created_at: '2026-09-20T10:02:00Z', reviewed_at: null, has_thumbnail: true}]
+        : []),
+    ],
+    remediations: [],
+    application: {
+      role: partnerRole,
+      status,
+      steps,
+      nextStep: steps.find((s) => !s.complete)?.step ?? null,
+      missingSteps: missing,
+      complete: missing.length === 0,
+      identityVerified: false,
+      agreementVersion: 'v1.0',
+      currentAgreementVersion: 'v1.0',
+      appliedAt: '2026-09-19T10:00:00Z',
+      submittedAt: status === 'pending_review' ? '2026-09-21T10:00:00Z' : null,
+      activatedAt: status === 'active' ? '2026-09-22T10:00:00Z' : null,
+      reviewedAt: null,
+      rejectionReason: null,
+    },
+  };
+}
+
+export const FAKE_PARTNER_APPLICATIONS: PartnerApplication[] = [
+  application('user-10', 'broker', 'pending_review', {fullName: 'Neema Broker', phoneNumber: '+255713000010'}),
+  application('user-11', 'landlord', 'pending_review', {fullName: 'Baraka Mwinyi', phoneNumber: '+255713000011', payoutMethod: 'bank'}),
+  application('user-12', 'broker', 'active', {fullName: 'Salma Active', phoneNumber: '+255713000012', kycStatus: 'verified'}),
+];
+
 export const FAKE_USERS: AdminUser[] = [
   {
     id: 'user-1', phone_number: '+255712000001', email: null, full_name: 'Amina Hassan', role: 'landlord',
     status: 'active', job_title: null, suspension_reason: null, organization_id: null, organization_name: null,
     last_login_at: null, created_at: '2026-09-01T10:00:00Z', is_staff: false,
+    roles: [role('customer', 'active'), role('landlord', 'active')],
   },
   {
     id: 'user-2', phone_number: '+255712000002', email: null, full_name: 'Juma Customer', role: 'customer',
     status: 'suspended', job_title: null, suspension_reason: 'Payment dispute', organization_id: null,
     organization_name: null, last_login_at: null, created_at: '2026-09-02T10:00:00Z', is_staff: false,
+    roles: [role('customer', 'active'), role('broker', 'active')],
   },
 ];
 
@@ -58,6 +120,8 @@ export const FAKE_PROPERTIES: AdminProperty[] = [
     deposit_amount: '3000000.00', amount_per_instalment: '4500000.00',
     terms: 'Rent payable quarterly in advance.', house_rules: 'No loud music after 10pm.',
     landlord_name: 'Amina Hassan', broker_name: 'Neema Broker', amenity_count: 2,
+    listed_by: {kind: 'broker', user_id: 'user-10', name: 'Neema Broker'},
+    landlord_confirmation: {status: 'disputed', reason: 'This is not my house', confirmed_at: null},
   },
 ];
 
@@ -88,7 +152,8 @@ const FAKE_ACTIVITY: AuditEntry[] = [
  * tested against the same failure modes users will hit.
  */
 export function createFakeAdminApi(overrides: Partial<AdminApi> = {}): AdminApi {
-  const users = [...FAKE_USERS, ...FAKE_STAFF].map((u) => ({...u}));
+  const users: AdminUser[] = [...FAKE_USERS, ...FAKE_STAFF].map((u) => ({...u, roles: u.roles?.map((r) => ({...r}))}));
+  const partnerApplications = FAKE_PARTNER_APPLICATIONS.map((a) => structuredClone(a));
   const organizations = FAKE_ORGANIZATIONS.map((o) => ({...o}));
   const properties = FAKE_PROPERTIES.map((p) => ({...p}));
   const settings = FAKE_SETTINGS.map((s) => ({...s}));
@@ -210,7 +275,10 @@ export function createFakeAdminApi(overrides: Partial<AdminApi> = {}): AdminApi 
 
     async listUsers(params = {}) {
       const staffOnly = params.staffOnly;
-      const filtered = users.filter((u) => {
+      const partnerStatuses = String(params.partnerStatus ?? 'active').split(',');
+      const filtered = users.filter((u) => (params.partnerRole
+        ? (u.roles ?? []).some((r) => r.role === params.partnerRole && partnerStatuses.includes(r.status))
+        : true)).filter((u) => {
         if (staffOnly === true || staffOnly === 'true') return u.is_staff;
         if (staffOnly === false || staffOnly === 'false') return !u.is_staff;
         return true;
@@ -297,6 +365,75 @@ export function createFakeAdminApi(overrides: Partial<AdminApi> = {}): AdminApi 
       user.status = body.status;
       user.suspension_reason = body.status === 'suspended' ? body.reason ?? null : null;
       return user;
+    },
+
+    async changeUserRoleStatus(id, partnerRole, body) {
+      const user = users.find((u) => u.id === id);
+      const held = user?.roles?.find((r) => r.role === partnerRole);
+      if (!user || !held) throw new AdminApiError('NOT_FOUND', `A ${partnerRole} role for that user not found`, 404);
+      if (body.status === 'suspended' && !body.reason) {
+        throw new AdminApiError('VALIDATION_FAILED', 'Give a reason for suspending this role', 400);
+      }
+      const from = body.status === 'suspended' ? 'active' : 'suspended';
+      if (held.status !== from) {
+        throw new AdminApiError('CONFLICT', `Only an ${from} ${partnerRole} role can be changed that way (this one is ${held.status})`, 409);
+      }
+      held.status = body.status;
+      return user;
+    },
+
+    async listPartnerApplications(params = {}) {
+      const term = params.q ? String(params.q).toLowerCase() : null;
+      const filtered = partnerApplications
+        .filter((a) => (params.role ? a.role === params.role : true))
+        .filter((a) => (params.status ? a.status === params.status : true))
+        .filter((a) => (term
+          ? `${a.person.fullName ?? ''} ${a.person.phoneNumber ?? ''} ${a.person.nationalIdNumber ?? ''}`.toLowerCase().includes(term)
+          : true));
+      return page(filtered, Number(params.limit ?? 20), Number(params.offset ?? 0));
+    },
+
+    async getPartnerApplication(userId, partnerRole) {
+      const found = partnerApplications.find((a) => a.userId === userId && a.role === partnerRole);
+      if (!found) throw new AdminApiError('NOT_FOUND', `A ${partnerRole} application not found`, 404);
+      return found;
+    },
+
+    async decidePartnerApplication(userId, partnerRole, body) {
+      const found = partnerApplications.find((a) => a.userId === userId && a.role === partnerRole);
+      if (!found) throw new AdminApiError('NOT_FOUND', `A ${partnerRole} application not found`, 404);
+      if (found.status !== 'pending_review') {
+        throw new AdminApiError('CONFLICT', `Only an application waiting for review can be decided (this one is ${found.status})`, 409);
+      }
+      if (body.decision === 'reject' && !body.reason?.trim()) {
+        throw new AdminApiError('VALIDATION_FAILED', 'A rejection needs a reason the applicant can read', 400);
+      }
+      if (body.decision === 'action_needed') {
+        if (!body.remediation?.requestedAction?.trim()) {
+          throw new AdminApiError('VALIDATION_FAILED', 'Say what the applicant should do (remediation.requestedAction)', 400);
+        }
+        if (!(body.remediation.issue ?? body.reason)?.trim()) {
+          throw new AdminApiError('VALIDATION_FAILED', 'Say what the issue is (remediation.issue or reason)', 400);
+        }
+        found.remediations = [
+          ...found.remediations,
+          {
+            id: `rem-${++sequence}`, kyc_document_id: body.remediation.documentId ?? null,
+            issue: (body.remediation.issue ?? body.reason) as string, requested_action: body.remediation.requestedAction,
+            raised_by: 'admin@homemate.co.tz', created_at: new Date().toISOString(),
+          },
+        ];
+      }
+      const next = {approve: 'active', action_needed: 'action_needed', reject: 'rejected'}[body.decision] as PartnerApplication['status'];
+      found.status = next;
+      found.application = {
+        ...found.application,
+        status: next,
+        reviewedAt: new Date().toISOString(),
+        rejectionReason: body.decision === 'reject' ? body.reason : null,
+        activatedAt: next === 'active' ? new Date().toISOString() : found.application.activatedAt,
+      };
+      return found;
     },
 
     async listOrganizations(params = {}) {
@@ -676,6 +813,7 @@ export function createFakeAdminApi(overrides: Partial<AdminApi> = {}): AdminApi 
             counts.paymentsPending + counts.paymentsFailed + counts.payoutsDue +
             counts.payoutsBlocked + counts.paymentsDeclared + counts.paymentsNeedingInstructions,
           inquiries: counts.inquiriesPending,
+          partners: partnerApplications.filter((a) => a.status === 'pending_review').length,
         },
       };
     },
@@ -1330,6 +1468,13 @@ export function createFakeAdminApi(overrides: Partial<AdminApi> = {}): AdminApi 
         );
       }
       booking.status = body.status as string;
+      booking.history = [
+        ...(booking.history ?? []),
+        {
+          status: booking.status, at: new Date().toISOString(), actor: 'admin@homemate.co.tz', by_landlord: false,
+          label: booking.status === 'active' ? 'Moved in' : 'Ended',
+        },
+      ];
       return booking;
     },
 

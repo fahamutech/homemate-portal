@@ -130,6 +130,8 @@ function formFrom(property: AdminPropertyDetail): typeof EMPTY_FORM {
   };
 }
 
+const LANDLORD_PICKER_STATUSES = 'invited,applied,pending_review,action_needed,active,suspended';
+
 /**
  * One multi-step form for both capturing a new property and correcting an
  * existing one: the fields, the validation and the map picker are identical,
@@ -199,8 +201,17 @@ export function PropertyFormModal({
   );
   const amenityCatalogue = useResource(() => api.listDictionary('amenity'), 'amenity');
   const methods = useResource(() => api.listPaymentMethods({activeOnly: true}), 'active-payment-methods');
-  const landlords = useResource(() => api.listUsers({role: 'landlord', limit: 100}), 'landlords');
-  const brokers = useResource(() => api.listUsers({role: 'broker', limit: 100}), 'brokers');
+  // By T01 role, not users.role: a broker must be an approved broker; a landlord
+  // may be anyone holding a landlord role that was not rejected (T04 lets a
+  // broker list for an invited landlord).
+  const landlords = useResource(
+    () => api.listUsers({partnerRole: 'landlord', partnerStatus: LANDLORD_PICKER_STATUSES, limit: 100}),
+    'landlords'
+  );
+  const brokers = useResource(
+    () => api.listUsers({partnerRole: 'broker', partnerStatus: 'active', limit: 100}),
+    'brokers'
+  );
   const agencies = useResource(() => api.listUsers({role: 'agency', limit: 100}), 'agency-users');
 
   function set<K extends keyof typeof EMPTY_FORM>(key: K, value: (typeof EMPTY_FORM)[K]) {

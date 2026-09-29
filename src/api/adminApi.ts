@@ -31,6 +31,8 @@ export interface AdminUser {
   unpaid_balance?: string;
   /** Staff (non-admin roles) only: the sidebar sections this account may open. */
   allowed_routes?: string[] | null;
+  /** Every role the person holds (T01): customer, broker, landlord with their status. Staff have none. */
+  roles?: UserRole[];
   /**
    * Present exactly once, on the response to createUser for a staff role —
    * the plaintext of the password just generated for them. Never stored or
@@ -38,6 +40,80 @@ export interface AdminUser {
    */
   initial_password?: string;
 }
+
+/** One of a person's roles (T01): customer, broker or landlord, each with its own status. */
+export type PartnerRole = 'broker' | 'landlord';
+export type RoleStatus =
+  | 'invited' | 'applied' | 'pending_review' | 'active' | 'action_needed' | 'rejected' | 'suspended';
+
+export interface UserRole {
+  role: 'customer' | PartnerRole;
+  status: RoleStatus;
+  appliedAt: string | null;
+  submittedAt: string | null;
+  activatedAt: string | null;
+  reviewedAt: string | null;
+  rejectionReason: string | null;
+}
+
+/** A step of a partner application, as partner_application_state() reports it (T03). */
+export interface ApplicationStep {
+  step: 'details' | 'identity' | 'ownership' | 'payout' | 'agreement';
+  complete: boolean;
+}
+
+export interface PartnerApplicationState {
+  role: PartnerRole;
+  status: RoleStatus | 'not_started';
+  steps: ApplicationStep[];
+  nextStep: string | null;
+  missingSteps: string[];
+  complete: boolean;
+  identityVerified: boolean;
+  agreementVersion: string | null;
+  currentAgreementVersion: string | null;
+  appliedAt: string | null;
+  submittedAt: string | null;
+  activatedAt: string | null;
+  reviewedAt: string | null;
+  rejectionReason: string | null;
+}
+
+export interface PartnerApplicationDocument {
+  id: string;
+  document_type: string;
+  status: 'pending' | 'verified' | 'rejected';
+  rejection_reason: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  has_thumbnail: boolean;
+}
+
+/** A broker or landlord application in the queue (GET /admin/partner-applications). */
+export interface PartnerApplication {
+  userId: string;
+  role: PartnerRole;
+  status: RoleStatus;
+  person: {
+    fullName: string | null;
+    phoneNumber: string | null;
+    email: string | null;
+    kycStatus: KycStatus;
+    dateOfBirth: string | null;
+    nationalIdNumber: string | null;
+    tinNumber: string | null;
+    physicalAddress: string | null;
+    payoutMethod: 'mobile_money' | 'bank' | null;
+  };
+  documents: PartnerApplicationDocument[];
+  remediations: {id: string; kyc_document_id: string | null; issue: string; requested_action: string; raised_by: string | null; created_at: string}[];
+  application: PartnerApplicationState;
+}
+
+export type PartnerDecision =
+  | {decision: 'approve'; reason?: string}
+  | {decision: 'action_needed'; reason?: string; remediation: {issue?: string; requestedAction: string; documentId?: string}}
+  | {decision: 'reject'; reason: string};
 
 export type KycStatus = 'not_started' | 'pending' | 'in_review' | 'verified' | 'rejected' | 'expired';
 
@@ -245,6 +321,8 @@ export interface AttentionSnapshot {
     staff: number;
     payments: number;
     inquiries: number;
+    /** Broker and landlord applications waiting for review (T03). */
+    partners?: number;
   };
 }
 
@@ -347,8 +425,19 @@ export interface CommissionTotals {
   placements: string;
 }
 
+export interface BookingStatusChange {
+  status: string;
+  at: string;
+  actor: string | null;
+  by_landlord: boolean;
+  /** e.g. "Confirmed by landlord", "Ended by landlord", "Payment verified". */
+  label: string;
+}
+
 export interface BookingDetail extends Booking {
   payments: CustomerFacingPayment[];
+  /** Status changes from the audit log (T08); absent on older servers. */
+  history?: BookingStatusChange[];
 }
 
 /** A payment as the app shows it, so the portal can see the same thing. */
@@ -506,10 +595,31 @@ export interface PropertyParty {
   is_primary: boolean;
   assigned_by: string | null;
   assigned_at: string;
+  /** Landlord parties on a broker's app listing need the landlord's say-so (T04). */
+  confirmation_status?: LandlordConfirmationStatus;
+  confirmed_at?: string | null;
+  dispute_reason?: string | null;
+}
+
+export type LandlordConfirmationStatus = 'not_required' | 'pending' | 'confirmed' | 'disputed';
+
+/** Who listed a home: a broker or landlord from the app, or staff in the backoffice (T04/T08). */
+export interface ListedBy {
+  kind: 'broker' | 'landlord' | 'backoffice';
+  user_id: string | null;
+  name: string | null;
+}
+
+export interface LandlordConfirmation {
+  status: LandlordConfirmationStatus;
+  reason: string | null;
+  confirmed_at: string | null;
 }
 
 export interface AdminProperty {
   id: string;
+  listed_by?: ListedBy;
+  landlord_confirmation?: LandlordConfirmation;
   reference_code: string;
   title: string;
   description?: string | null;
@@ -678,6 +788,12 @@ export interface AdminApi {
   createUser(body: Record<string, unknown>): Promise<AdminUser>;
   updateUser(id: string, body: Record<string, unknown>): Promise<AdminUser>;
   changeUserStatus(id: string, body: {status: string; reason?: string}): Promise<AdminUser>;
+  /** Suspend (with a reason) or reactivate a person's broker or landlord role (T08). */
+  changeUserRoleStatus(id: string, role: PartnerRole, body: {status: 'active' | 'suspended'; reason?: string}): Promise<AdminUser>;
+
+  listPartnerApplications(params?: Record<string, unknown>): Promise<Page<PartnerApplication>>;
+  getPartnerApplication(userId: string, role: PartnerRole): Promise<PartnerApplication>;
+  decidePartnerApplication(userId: string, role: PartnerRole, body: PartnerDecision): Promise<PartnerApplication>;
 
   getKycProfile(id: string): Promise<KycProfile>;
   updateKycProfile(id: string, body: Record<string, unknown>): Promise<KycProfile>;
@@ -824,6 +940,13 @@ export function createHttpAdminApi(token: string, baseUrl: string = API_BASE_URL
     createUser: (body) => request('/admin/users', {method: 'POST', body}),
     updateUser: (id, body) => request(`/admin/users/${id}`, {method: 'PATCH', body}),
     changeUserStatus: (id, body) => request(`/admin/users/${id}/status`, {method: 'POST', body}),
+    changeUserRoleStatus: (id, role, body) =>
+      request(`/admin/users/${id}/roles/${role}/status`, {method: 'POST', body}),
+
+    listPartnerApplications: (params) => request(`/admin/partner-applications${toQueryString(params)}`),
+    getPartnerApplication: (userId, role) => request(`/admin/partner-applications/${userId}/${role}`),
+    decidePartnerApplication: (userId, role, body) =>
+      request(`/admin/partner-applications/${userId}/${role}/decision`, {method: 'POST', body}),
 
     getKycProfile: (id) => request(`/admin/users/${id}/kyc`),
     updateKycProfile: (id, body) => request(`/admin/users/${id}/kyc`, {method: 'PATCH', body}),
