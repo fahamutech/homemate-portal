@@ -3,8 +3,9 @@
  *
  * Mirrors homemate-mobile's `lib/core/config/env.dart`: a production build
  * that nobody explicitly pointed elsewhere must reach the deployed backend
- * rather than `localhost`, even if `.env`/`.env.local` (checked in for local
- * dev convenience) still say otherwise when `vite build` runs.
+ * rather than `localhost`, even if a local `.env`/`.env.local` still says
+ * otherwise when `vite build` runs. Neither file is committed; see
+ * `.env.example`.
  */
 
 const PRODUCTION_API_BASE_URL = 'https://homemate-faas.bfast.smartstock.co.tz';
